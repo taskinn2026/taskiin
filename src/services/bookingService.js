@@ -280,12 +280,22 @@ export const bookingService = {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, '') || '';
         const webhookUrl = `${supabaseUrl}/functions/v1/chargily-webhook`;
 
+        // Fetch Customer Profile for Auto-fill
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, phone_number, email')
+            .eq('id', userId)
+            .single();
+
         const payload = {
             bookingId: bookingId,
             amount: amount, 
             successUrl: `${baseUrl}/payment/success?booking_id=${bookingId}`,
             failureUrl: `${baseUrl}/payment/failure?booking_id=${bookingId}`,
-            webhookEndpoint: webhookUrl
+            webhookEndpoint: webhookUrl,
+            customerName: profile?.full_name || 'Guest User',
+            customerEmail: profile?.email || 'guest@taskiin.com',
+            customerPhone: profile?.phone_number || ''
         };
 
         // 4. Call Supabase Edge Function

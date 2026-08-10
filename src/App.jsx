@@ -1133,6 +1133,14 @@ const CheckoutFlow = ({ hotel, type, onClose, lang, dates, user, onBooked }) => 
     if (isSubmitting.current) return; // Double-click guard
     isSubmitting.current = true;
     setLoading(true);
+
+    if (!user || !user.id) {
+      toast.error(lang === 'ar' ? 'يجب تسجيل الدخول أولاً لإتمام الحجز' : 'You must log in to complete the booking');
+      setLoading(false);
+      isSubmitting.current = false;
+      return;
+    }
+
     try {
       const bookingRef = Math.random().toString(36).substring(2, 8).toUpperCase();
 

@@ -250,15 +250,10 @@ export const bookingService = {
         return data;
     },
 
-    // 2. Chargily Checkout Session (Backend-Reflected Logic)
+    // 2. Chargily Checkout Session (Backend-Reflected Logic via Edge Functions)
     createCheckoutSession: async (bookingId, userId, bookingRef) => {
         // 1. Env Validation
-        const secretKey = import.meta.env.VITE_CHARGILY_SECRET_KEY;
-        const n8nUrl = import.meta.env.VITE_N8N_PUBLIC_URL;
         const frontendUrl = import.meta.env.VITE_FRONTEND_BASE_URL;
-
-        if (!secretKey) throw new Error('Missing Chargily Secret Key');
-        if (!n8nUrl) throw new Error('Missing N8N Webhook URL');
 
         // 2. Fetch Booking for Amount (Security)
         console.log('[bookingService] createCheckoutSession called', { bookingId, userId });
@@ -277,53 +272,38 @@ export const bookingService = {
 
         if (amount <= 0) throw new Error('Invalid amount');
 
-        // 3. Prepare Payload
+        // 3. Prepare Payload for Edge Function
         // Use window.location.origin to handle dynamic ports (e.g. 5173, 3000, 3001)
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : frontendUrl;
 
+        // Note: The webhook URL should point to your deployed Supabase Edge Function.
+        // During local testing, you might need an ngrok URL. For production, it's the real Supabase function URL.
+        // We'll construct the webhook URL based on the Supabase URL to keep it dynamic.
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const webhookUrl = `${supabaseUrl}/functions/v1/chargily-webhook`;
+
         const payload = {
-            amount: amount, // DZD
-            currency: 'dzd',
-            payment_method: 'edahabia',
-            success_url: `${baseUrl}/payment/success?booking_id=${bookingId}`,
-            failure_url: `${baseUrl}/payment/failure?booking_id=${bookingId}`,
-            webhook_endpoint: `${n8nUrl}/webhook/chargily`,
-            description: `Deposit for booking #${bookingRef}`,
-            locale: 'ar',
-            metadata: {
-                booking_id: bookingId,
-                booking_ref: bookingRef,
-                user_id: userId,
-                amount_expected: amount,
-                type: 'deposit'
-            }
+            bookingId: bookingId,
+            amount: amount, 
+            successUrl: `${baseUrl}/payment/success?booking_id=${bookingId}`,
+            failureUrl: `${baseUrl}/payment/failure?booking_id=${bookingId}`,
+            webhookEndpoint: webhookUrl
         };
 
-        // 4. Call Chargily API directly (Browser -> Chargily)
-        // Note: Using Secret Key in Frontend is risky in prod, but User explicitly asked for this "Frontend -> Backend Route -> Chargily" flow 
-        // to be simulated or implemented as requested in "User (localhost) -> Chargily". 
-        // User provided the key.
-
+        // 4. Call Supabase Edge Function
         try {
-            const response = await fetch('https://pay.chargily.net/test/api/v2/checkouts', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${secretKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+            const { data, error: invokeError } = await supabase.functions.invoke('chargily-checkout', {
+                body: payload
             });
 
-            if (!response.ok) {
-                const errText = await response.text();
-                console.error('Chargily Error:', errText);
-                throw new Error(`Chargily API Error: ${response.statusText}`);
+            if (invokeError) {
+                console.error('Edge Function Error:', invokeError);
+                throw new Error(`Edge Function Error: ${invokeError.message}`);
             }
 
-            const responseData = await response.json();
-            console.log('Chargily Response:', responseData);
+            console.log('Edge Function Response:', data);
 
-            return responseData;
+            return data;
         } catch (e) {
             console.error('Checkout creation failed:', e);
             throw e;

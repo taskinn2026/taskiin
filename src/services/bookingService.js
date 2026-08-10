@@ -277,9 +277,7 @@ export const bookingService = {
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : frontendUrl;
 
         // Note: The webhook URL should point to your deployed Supabase Edge Function.
-        // During local testing, you might need an ngrok URL. For production, it's the real Supabase function URL.
-        // We'll construct the webhook URL based on the Supabase URL to keep it dynamic.
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, '') || '';
         const webhookUrl = `${supabaseUrl}/functions/v1/chargily-webhook`;
 
         const payload = {

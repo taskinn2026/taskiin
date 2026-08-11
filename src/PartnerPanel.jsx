@@ -1113,6 +1113,14 @@ const Profile = ({ t, lang, hotel }) => {
                         <label className="text-xs font-bold text-gray-500 mb-2 block">{lang === 'ar' ? 'المسافة عن الحرم (متر)' : 'Distance to Haram (m)'}</label>
                         <input type="number" value={formData.distance_to_haram_meters || ''} onChange={e => setFormData({ ...formData, distance_to_haram_meters: parseInt(e.target.value) || 0 })} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" />
                     </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block">{lang === 'ar' ? 'خط العرض (Latitude)' : 'Latitude'}</label>
+                        <input type="number" step="any" value={formData.latitude || ''} onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) || null })} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" dir="ltr" placeholder="21.4225" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block">{lang === 'ar' ? 'خط الطول (Longitude)' : 'Longitude'}</label>
+                        <input type="number" step="any" value={formData.longitude || ''} onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) || null })} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" dir="ltr" placeholder="39.8262" />
+                    </div>
                 </div>
                 <div className="mt-4 flex justify-end">
                     <button onClick={handleSave} disabled={loading} className="px-6 py-2 bg-emerald-800 text-white rounded-xl font-bold">{loading ? t.loading : t.save}</button>
@@ -1161,6 +1169,14 @@ const HotelSetupWizard = ({ t, lang, onSave, loading }) => {
                     <div>
                         <label className="text-xs font-bold text-gray-500 mb-1.5 block">{lang === 'ar' ? 'المسافة عن الحرم (متر)' : 'Distance to Haram (m)'}</label>
                         <input type="number" value={formData.distance} onChange={e => setFormData({ ...formData, distance: parseInt(e.target.value) })} className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 outline-none" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-1.5 block">{lang === 'ar' ? 'خط العرض (Latitude)' : 'Latitude'}</label>
+                        <input type="number" step="any" value={formData.latitude || ''} onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) || null })} className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 outline-none" dir="ltr" placeholder="21.4225" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-1.5 block">{lang === 'ar' ? 'خط الطول (Longitude)' : 'Longitude'}</label>
+                        <input type="number" step="any" value={formData.longitude || ''} onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) || null })} className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 outline-none" dir="ltr" placeholder="39.8262" />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-gray-500 mb-1.5 block">{lang === 'ar' ? 'الوصف' : 'Description'}</label>
@@ -1279,6 +1295,8 @@ export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
                 city: dbCity,
                 address: data.address,
                 distance_to_haram_meters: parseInt(data.distance || 0),
+                latitude: data.latitude || null,
+                longitude: data.longitude || null,
                 description: data.description,
                 owner_id: session.user.id,
                 is_active: true,

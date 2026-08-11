@@ -2546,6 +2546,7 @@ export default function TalbiaApp() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [selectedPageSlug, setSelectedPageSlug] = useState(null);
   const [notification, setNotification] = useState(null); // Toast state
 
   useEffect(() => { console.log("App Updated: " + new Date().toISOString()); }, []);

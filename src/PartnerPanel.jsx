@@ -58,6 +58,8 @@ const PARTNER_MOCK = {
 };
 
 // ========== TRANSLATIONS ==========
+import LocationPicker from './components/LocationPicker';
+
 const T = {
     ar: {
         overview: 'الرئيسية', rooms: 'الغرف', offers: 'العروض', bookings: 'الحجوزات',
@@ -1113,13 +1115,13 @@ const Profile = ({ t, lang, hotel }) => {
                         <label className="text-xs font-bold text-gray-500 mb-2 block">{lang === 'ar' ? 'المسافة عن الحرم (متر)' : 'Distance to Haram (m)'}</label>
                         <input type="number" value={formData.distance_to_haram_meters || ''} onChange={e => setFormData({ ...formData, distance_to_haram_meters: parseInt(e.target.value) || 0 })} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" />
                     </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 mb-2 block">{lang === 'ar' ? 'خط العرض (Latitude)' : 'Latitude'}</label>
-                        <input type="number" step="any" value={formData.latitude || ''} onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) || null })} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" dir="ltr" placeholder="21.4225" />
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 mb-2 block">{lang === 'ar' ? 'خط الطول (Longitude)' : 'Longitude'}</label>
-                        <input type="number" step="any" value={formData.longitude || ''} onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) || null })} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" dir="ltr" placeholder="39.8262" />
+                    <div className="md:col-span-2 mt-2">
+                        <LocationPicker 
+                            lang={lang}
+                            initialLat={formData.latitude}
+                            initialLng={formData.longitude}
+                            onLocationChange={(lat, lng) => setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))}
+                        />
                     </div>
                 </div>
                 <div className="mt-4 flex justify-end">
@@ -1170,13 +1172,13 @@ const HotelSetupWizard = ({ t, lang, onSave, loading }) => {
                         <label className="text-xs font-bold text-gray-500 mb-1.5 block">{lang === 'ar' ? 'المسافة عن الحرم (متر)' : 'Distance to Haram (m)'}</label>
                         <input type="number" value={formData.distance} onChange={e => setFormData({ ...formData, distance: parseInt(e.target.value) })} className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 outline-none" />
                     </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 mb-1.5 block">{lang === 'ar' ? 'خط العرض (Latitude)' : 'Latitude'}</label>
-                        <input type="number" step="any" value={formData.latitude || ''} onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) || null })} className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 outline-none" dir="ltr" placeholder="21.4225" />
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 mb-1.5 block">{lang === 'ar' ? 'خط الطول (Longitude)' : 'Longitude'}</label>
-                        <input type="number" step="any" value={formData.longitude || ''} onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) || null })} className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 outline-none" dir="ltr" placeholder="39.8262" />
+                    <div className="mt-2">
+                        <LocationPicker 
+                            lang={lang}
+                            initialLat={formData.latitude}
+                            initialLng={formData.longitude}
+                            onLocationChange={(lat, lng) => setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))}
+                        />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-gray-500 mb-1.5 block">{lang === 'ar' ? 'الوصف' : 'Description'}</label>

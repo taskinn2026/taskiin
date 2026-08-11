@@ -34,6 +34,7 @@ import AdminPanel from './AdminPanel';
 import PartnerPanel from './PartnerPanel';
 import PilgrimPanel from './PilgrimPanel';
 import VoucherTemplate from './components/VoucherTemplate';
+import CustomPageViewer from './components/CustomPageViewer';
 import HotelMapViewer from './components/HotelMapViewer';
 import { DataProvider } from './context/DataContext';
 import NetworkDebugger from './components/NetworkDebugger';
@@ -1416,7 +1417,7 @@ const BookingVoucherPage = ({ booking, onBack, lang }) => {
   );
 };
 
-const Footer = ({ lang }) => {
+const Footer = ({ lang, onPageClick }) => {
   const [links, setLinks] = useState([]);
   useEffect(() => {
     const fetchLinks = async () => {
@@ -1444,11 +1445,19 @@ const Footer = ({ lang }) => {
             <span className="text-xl font-bold tracking-tight text-white">{lang === 'ar' ? 'تلبية' : 'Talbia'}<span className="text-emerald-400">{lang === 'ar' ? 'تسكين' : 'Taskin'}</span></span>
           </div>
           <div className="md:col-span-3 flex flex-wrap gap-x-8 gap-y-4 md:justify-end">
-            {links.map((link, idx) => (
-              <a key={idx} href={link.url} className="text-gray-400 hover:text-white transition-colors text-sm font-medium">
-                {link.title}
-              </a>
-            ))}
+            {links.map((link, idx) => {
+              const isInternal = link.url && link.url.startsWith('#page=');
+              return (
+                <a key={idx} href={isInternal ? '#' : link.url} onClick={(e) => {
+                  if (isInternal) {
+                    e.preventDefault();
+                    onPageClick(link.url.split('=')[1]);
+                  }
+                }} className="text-gray-400 hover:text-white transition-colors text-sm font-medium">
+                  {link.title}
+                </a>
+              );
+            })}
           </div>
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
@@ -1733,6 +1742,9 @@ const AdvancedSearch = ({ filters, setFilters, lang, onSearch, onSaveSearch, set
 const HotelDetails = ({ hotel, onBack, lang, onOpenChat, filters, user, profile, onBooked, isFavorite, onToggleFavorite, showToast, isUserOnline }) => {
   const [activeTab, setActiveTab] = useState('room');
   const [showCheckout, setShowCheckout] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [selectedPageSlug, setSelectedPageSlug] = useState(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false); // Fix: Add missing state
@@ -2919,6 +2931,8 @@ export default function TalbiaApp() {
             }}
             showToast={showToast}
           />
+        ) : selectedPageSlug ? (
+          <CustomPageViewer slug={selectedPageSlug} onBack={() => setSelectedPageSlug(null)} lang={lang} />
         ) : voucher ? (
           <BookingVoucherPage booking={voucher} onBack={() => { setVoucher(null); setSelectedHotel(null); }} lang={lang} />
         ) : selectedHotel ? (
@@ -2957,7 +2971,7 @@ export default function TalbiaApp() {
                 {hotels.length > 0 ? (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">{hotels.map((hotel, index) => (<div key={hotel.offerId || `hotel-${index}`} onClick={() => setSelectedHotel(hotel)}><RoomCard hotel={hotel} lang={lang} user={user} isFavorite={(favoritesIds || []).includes(hotel.offerId || hotel.id)} onToggleFavorite={handleToggleFavorite} onClick={() => setSelectedHotel(hotel)} /></div>))}</div>) : (<div className="text-center py-20 bg-white rounded-3xl border border-gray-100"><div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400"><Search size={32} /></div><h3 className="text-xl font-bold text-gray-900">{t('noResults')}</h3><button onClick={() => resetSearch()} className="mt-6 text-emerald-800 font-bold hover:underline">{t('resetFilters')}</button></div>)}
               </div>
             </div>
-            <Footer lang={lang} />
+            <Footer lang={lang} onPageClick={(slug) => { setSelectedPageSlug(slug); window.scrollTo(0,0); }} />
           </>
         )}
         <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onLogin={handleLogin} lang={lang} setLang={setLang} />

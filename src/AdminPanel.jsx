@@ -6,10 +6,11 @@ import {
     LayoutDashboard, Briefcase, Hotel, Wallet, Megaphone, BarChart3,
     Bell, Globe, LogOut, Check, X, Eye, Edit, Trash2, Ban, Plus, Pause, Play,
     ChevronDown, Filter, Download, Send, Tag, CalendarCheck, BadgeCheck,
-    TrendingUp, AlertCircle, DollarSign, Users, Clock, Search, ArrowRight, Building, Menu, Save
+    TrendingUp, AlertCircle, DollarSign, Users, Clock, Search, ArrowRight, Building, Menu, Save, FileText
 } from 'lucide-react';
 import NotificationBellAdmin from './components/NotificationBellAdmin';
 import AdminFinancials from './components/AdminFinancials';
+import AdminPagesSection from './components/AdminPagesSection';
 
 const ADMIN_T = {
     ar: {
@@ -31,7 +32,7 @@ const ADMIN_T = {
         topViewed: 'الأكثر مشاهدة', searchStats: 'إحصائيات البحث', demandCurve: 'منحنى الطلب',
         makkah: 'مكة المكرمة', madinah: 'المدينة المنورة', views: 'مشاهدة',
         reason: 'سبب الإجراء', confirm: 'تأكيد', cancel: 'إلغاء', save: 'حفظ', currency: 'د.ج',
-        scheduled: 'مجدول', logout: 'خروج', backHome: 'العودة للرئيسية'
+        scheduled: 'مجدول', logout: 'خروج', backHome: 'العودة للرئيسية', pages: 'الصفحات المخصصة'
     },
     en: {
         dashboard: 'Dashboard', offers: 'Offers & Bookings', partners: 'Hotels & Partners',
@@ -52,7 +53,7 @@ const ADMIN_T = {
         topViewed: 'Most Viewed', searchStats: 'Search Stats', demandCurve: 'Demand Curve',
         makkah: 'Makkah', madinah: 'Madinah', views: 'views',
         reason: 'Reason', confirm: 'Confirm', cancel: 'Cancel', save: 'Save', currency: 'DZD',
-        scheduled: 'Scheduled', logout: 'Logout', backHome: 'Back to Home'
+        scheduled: 'Scheduled', logout: 'Logout', backHome: 'Back to Home', pages: 'Custom Pages'
     }
 };
 
@@ -68,7 +69,8 @@ const AdminSidebar = ({ activeSection, setActiveSection, lang, t, setRole, onLog
         { id: 'partners', icon: Hotel, label: t.partners },
         { id: 'finance', icon: Wallet, label: t.finance },
         { id: 'marketing', icon: Megaphone, label: t.marketing },
-        { id: 'insights', icon: BarChart3, label: t.insights }
+        { id: 'insights', icon: BarChart3, label: t.insights },
+        { id: 'pages', icon: FileText, label: t.pages }
     ];
     // Fix: Ensure key unique
     return (
@@ -683,6 +685,7 @@ const MarketingSection = ({ t, lang }) => {
     const [seasonBanners, setSeasonBanners] = useState([]); // New state
     const [seasonBannerModal, setSeasonBannerModal] = useState({ open: false, banner: null }); // New modal state
     const [footerLinks, setFooterLinks] = useState([]);
+    const [customPages, setCustomPages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploadingBanner, setUploadingBanner] = useState(false);
 
@@ -762,14 +765,16 @@ const MarketingSection = ({ t, lang }) => {
 
     const fetchBanners = async () => {
         setLoading(true);
-        const [bannersData, seasonBannersData, footerData] = await Promise.all([
+        const [bannersData, seasonBannersData, footerData, pagesData] = await Promise.all([
             commonService.getAllBanners(),
             commonService.getAdminSeasonBanners().catch(e => { console.error('No season_banners table yet', e); return []; }),
-            commonService.getAppSettings('footer_links').catch(e => [])
+            commonService.getAppSettings('footer_links').catch(e => []),
+            commonService.getCustomPages().catch(e => [])
         ]);
         setBanners(bannersData || []);
         setSeasonBanners(seasonBannersData || []);
         setFooterLinks(footerData || []);
+        setCustomPages(pagesData || []);
         setLoading(false);
     };
 
@@ -997,10 +1002,16 @@ const MarketingSection = ({ t, lang }) => {
                 </div>
                 <div className="space-y-3">
                     {footerLinks.map((link, idx) => (
-                        <div key={idx} className="flex items-center gap-3">
+                        <div key={idx} className="flex flex-col md:flex-row md:items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
                             <input type="text" placeholder={lang === 'ar' ? 'العنوان' : 'Title'} value={link.title} onChange={e => { const newL = [...footerLinks]; newL[idx].title = e.target.value; setFooterLinks(newL); }} className="flex-1 border border-gray-200 rounded-lg p-2" />
-                            <input type="text" placeholder={lang === 'ar' ? 'الرابط' : 'URL'} value={link.url} onChange={e => { const newL = [...footerLinks]; newL[idx].url = e.target.value; setFooterLinks(newL); }} className="flex-1 border border-gray-200 rounded-lg p-2" />
-                            <button onClick={() => { const newL = footerLinks.filter((_, i) => i !== idx); setFooterLinks(newL); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                            <div className="flex-1 flex gap-2">
+                                <input type="text" placeholder={lang === 'ar' ? 'الرابط (http://... أو #page=slug)' : 'URL (or #page=slug)'} value={link.url} onChange={e => { const newL = [...footerLinks]; newL[idx].url = e.target.value; setFooterLinks(newL); }} className="flex-1 border border-gray-200 rounded-lg p-2" />
+                                <select value={link.url.startsWith('#page=') ? link.url : ''} onChange={e => { if(e.target.value) { const newL = [...footerLinks]; newL[idx].url = e.target.value; setFooterLinks(newL); } }} className="border border-gray-200 rounded-lg p-2 text-sm text-gray-600 bg-white min-w-[120px]">
+                                    <option value="" disabled>{lang === 'ar' ? 'اختر صفحة...' : 'Select Page...'}</option>
+                                    {customPages.map(p => <option key={p.id} value={`#page=${p.slug}`}>{p.title}</option>)}
+                                </select>
+                            </div>
+                            <button onClick={() => { const newL = footerLinks.filter((_, i) => i !== idx); setFooterLinks(newL); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg self-end md:self-auto"><Trash2 size={18} /></button>
                         </div>
                     ))}
                     <button onClick={() => setFooterLinks([...footerLinks, {title: '', url: ''}])} className="text-emerald-600 font-bold text-sm">+ {lang === 'ar' ? 'إضافة رابط' : 'Add Link'}</button>
@@ -1312,6 +1323,7 @@ export default function AdminPanel({ lang, setLang, setRole, onLogout }) {
             case 'finance': return <FinanceSection t={t} lang={lang} />;
             case 'marketing': return <MarketingSection t={t} lang={lang} />;
             case 'insights': return <InsightsSection t={t} lang={lang} />;
+            case 'pages': return <AdminPagesSection t={t} lang={lang} />;
             default: return <DashboardSection t={t} lang={lang} />;
         }
     };

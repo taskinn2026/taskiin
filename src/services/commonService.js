@@ -223,6 +223,55 @@ export const commonService = {
 
         const { data } = supabase.storage.from('rooms').getPublicUrl(filePath);
         return data.publicUrl;
+    },
+
+    // 9. Custom Pages
+    getCustomPages: async () => {
+        const { data, error } = await supabase
+            .from('custom_pages')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    },
+
+    getCustomPageBySlug: async (slug) => {
+        const { data, error } = await supabase
+            .from('custom_pages')
+            .select('*')
+            .eq('slug', slug)
+            .maybeSingle();
+        if (error) throw error;
+        return data;
+    },
+
+    createCustomPage: async (pageData) => {
+        const { data, error } = await supabase
+            .from('custom_pages')
+            .insert(pageData)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    updateCustomPage: async (id, pageData) => {
+        const { data, error } = await supabase
+            .from('custom_pages')
+            .update(pageData)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    deleteCustomPage: async (id) => {
+        const { error } = await supabase
+            .from('custom_pages')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+        return true;
     }
 };
-

@@ -289,6 +289,9 @@ function getRelativeTime(dateString) {
 }
 
 function calculateBookingAmount(booking) {
+    if (booking.total_price != null) return Number(booking.total_price);
+
+    // Fallback if missing
     if (!booking.check_in || !booking.check_out) return 0;
     const nights = Math.max(1, Math.ceil((new Date(booking.check_out) - new Date(booking.check_in)) / (1000 * 60 * 60 * 24)));
     const pricePerNight = booking.offer?.discount_price || booking.offer?.price_per_night || 0;

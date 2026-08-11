@@ -17,10 +17,22 @@ const VoucherTemplate = forwardRef(({ booking, lang = 'ar' }, ref) => {
     }, [booking]);
 
     const depositPaidAmount = (booking.deposit_amount ?? booking.deposit_paid) || 0;
-    const totalAmount = booking.total_price || depositPaidAmount;
+    
+    let totalAmount = booking.total_price;
+    if (totalAmount == null) {
+        const nights = Math.max(1, Math.ceil((new Date(booking.check_out) - new Date(booking.check_in)) / (1000 * 60 * 60 * 24)));
+        const pricePerNight = booking.offer?.discount_price || booking.offer?.price_per_night || 0;
+        const baseTotal = nights * Number(pricePerNight);
+        totalAmount = baseTotal;
+        if (booking.booking_type === 'bed') {
+            const guests = Math.max(1, booking.guests || 1);
+            totalAmount = Math.round(baseTotal / (booking.offer?.room?.capacity || 4)) * guests;
+        }
+    }
+
     const remainingCalc = booking.remaining_amount ?? Math.max(0, totalAmount - depositPaidAmount);
     
-    const isPaid = booking.status === 'paid' || remainingCalc === 0;
+    const isPaid = booking.status === 'paid' || remainingCalc <= 0;
 
     const t = {
         title: isRTL ? 'تلبية تسكين' : 'Talbiyah Taskin',

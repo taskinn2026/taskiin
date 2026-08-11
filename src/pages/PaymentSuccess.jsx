@@ -18,7 +18,13 @@ const PaymentSuccess = () => {
                 .then(booking => {
                     if (booking && booking.status !== 'confirmed' && booking.status !== 'paid') {
                         // Check if fully paid
-                        const isFullyPaid = booking.deposit_amount >= (booking.total_price || 0);
+                        let isFullyPaid = false;
+                        if (booking.total_price != null) {
+                            isFullyPaid = booking.deposit_amount >= booking.total_price;
+                        } else {
+                            const nights = Math.max(1, Math.ceil((new Date(booking.check_out || new Date()) - new Date(booking.check_in || new Date())) / (1000 * 60 * 60 * 24)));
+                            isFullyPaid = nights === 1;
+                        }
                         const newStatus = isFullyPaid ? 'paid' : 'confirmed';
                         return Promise.all([
                             bookingService.updateBookingStatus(id, newStatus, { deposit_paid: true }),

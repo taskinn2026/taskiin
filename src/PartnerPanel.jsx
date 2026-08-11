@@ -860,11 +860,7 @@ const Bookings = ({ t, bookings, onStatusUpdate, lang, exchangeRate = 35.80 }) =
                                     const pricePerNight = b.offer?.discount_price || b.offer?.price_per_night || 0;
                                     const baseTotal = nights * Number(pricePerNight);
 
-                                    let computedTotal = baseTotal;
-                                    if (b.booking_type === 'bed') {
-                                        const guests = Math.max(1, b.guests || 1);
-                                        computedTotal = Math.round(baseTotal / (b.offer?.room?.capacity || 4)) * guests;
-                                    }
+                                    let computedTotal = b.total_price; if(computedTotal == null) { computedTotal = baseTotal; if (b.booking_type === 'bed') { const guests = Math.max(1, b.guests || 1); computedTotal = Math.round(baseTotal / (b.offer?.room?.capacity || 4)) * guests; } }
 
                                     return (
                                         <>
@@ -1480,3 +1476,4 @@ export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
         </ErrorBoundary >
     );
 }
+

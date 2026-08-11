@@ -548,9 +548,15 @@ const PaymentsSection = ({ t, lang, user, onDownloadPdf }) => {
     // 1. Pending Payment (No Deposit yet)
     const pendingPayment = bookings.filter(b => b.status === 'pending');
     // 2. Deposit Paid (Waiting for confirmation/completion)
-    const pendingCompletion = bookings.filter(b => b.status === 'confirmed');
+    const pendingCompletion = bookings.filter(b => {
+        const remaining = b.remaining_amount ?? (b.total_price - (b.deposit_amount || 0));
+        return b.status === 'confirmed' || (b.status === 'paid' && remaining > 0);
+    });
     // 3. Fully Paid / Completed
-    const completed = bookings.filter(b => b.status === 'paid');
+    const completed = bookings.filter(b => {
+        const remaining = b.remaining_amount ?? (b.total_price - (b.deposit_amount || 0));
+        return b.status === 'paid' && remaining <= 0;
+    });
 
     return (
         <div className="space-y-6 pb-20">
@@ -571,9 +577,7 @@ const PaymentsSection = ({ t, lang, user, onDownloadPdf }) => {
                                     </span>
                                 </div>
                                 {(() => {
-                                    const nights = b.check_in && b.check_out ? Math.ceil((new Date(b.check_out) - new Date(b.check_in)) / (1000 * 60 * 60 * 24)) : 1;
-                                    const roomPriceForDuration = (b.offer?.discount_price || b.offer?.price || 0) * nights;
-                                    const totalPrice = b.booking_type === 'bed' ? (Math.round(roomPriceForDuration / (b.offer?.room?.capacity || 4)) * (b.guests || 1)) : roomPriceForDuration;
+                                    let totalPrice = b.total_price; if (totalPrice == null) { const nights = b.check_in && b.check_out ? Math.ceil((new Date(b.check_out) - new Date(b.check_in)) / (1000 * 60 * 60 * 24)) : 1; const roomPriceForDuration = (b.offer?.discount_price || b.offer?.price || 0) * nights; totalPrice = b.booking_type === 'bed' ? (Math.round(roomPriceForDuration / (b.offer?.room?.capacity || 4)) * (b.guests || 1)) : roomPriceForDuration; }
                                     return (
                                         <div className="flex justify-between items-end mt-3 pt-3 border-t border-gray-50">
                                             <div className="flex flex-col">
@@ -607,9 +611,7 @@ const PaymentsSection = ({ t, lang, user, onDownloadPdf }) => {
                                     </span>
                                 </div>
                                 {(() => {
-                                    const nights = b.check_in && b.check_out ? Math.ceil((new Date(b.check_out) - new Date(b.check_in)) / (1000 * 60 * 60 * 24)) : 1;
-                                    const roomPriceForDuration = (b.offer?.discount_price || b.offer?.price || 0) * nights;
-                                    const totalPrice = b.booking_type === 'bed' ? (Math.round(roomPriceForDuration / (b.offer?.room?.capacity || 4)) * (b.guests || 1)) : roomPriceForDuration;
+                                    let totalPrice = b.total_price; if (totalPrice == null) { const nights = b.check_in && b.check_out ? Math.ceil((new Date(b.check_out) - new Date(b.check_in)) / (1000 * 60 * 60 * 24)) : 1; const roomPriceForDuration = (b.offer?.discount_price || b.offer?.price || 0) * nights; totalPrice = b.booking_type === 'bed' ? (Math.round(roomPriceForDuration / (b.offer?.room?.capacity || 4)) * (b.guests || 1)) : roomPriceForDuration; }
                                     const depositPaid = b.deposit_amount || 0;
                                     const remaining = b.remaining_amount || (totalPrice - depositPaid);
                                     return (
@@ -663,9 +665,7 @@ const PaymentsSection = ({ t, lang, user, onDownloadPdf }) => {
                                     </span>
                                 </div>
                                 {(() => {
-                                    const nights = b.check_in && b.check_out ? Math.ceil((new Date(b.check_out) - new Date(b.check_in)) / (1000 * 60 * 60 * 24)) : 1;
-                                    const roomPriceForDuration = (b.offer?.discount_price || b.offer?.price || 0) * nights;
-                                    const totalPrice = b.booking_type === 'bed' ? (Math.round(roomPriceForDuration / (b.offer?.room?.capacity || 4)) * (b.guests || 1)) : roomPriceForDuration;
+                                    let totalPrice = b.total_price; if (totalPrice == null) { const nights = b.check_in && b.check_out ? Math.ceil((new Date(b.check_out) - new Date(b.check_in)) / (1000 * 60 * 60 * 24)) : 1; const roomPriceForDuration = (b.offer?.discount_price || b.offer?.price || 0) * nights; totalPrice = b.booking_type === 'bed' ? (Math.round(roomPriceForDuration / (b.offer?.room?.capacity || 4)) * (b.guests || 1)) : roomPriceForDuration; }
                                     return (
                                         <div className="flex justify-between items-end mt-3 pt-3 border-t border-gray-50">
                                             <div className="space-y-0.5">
@@ -1093,10 +1093,20 @@ export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, p
 
 
     const handleDownloadPdf = (booking) => {
-        // Use stored values directly — no need to recalculate
-        const totalCalcPrice = booking.total_price || booking.deposit_amount || 0;
+        // Use stored values directly, fallback to dynamic calculation if missing
+        let totalCalcPrice = booking.total_price;
+        if (totalCalcPrice == null) {
+            const nights = Math.max(1, Math.ceil((new Date(booking.check_out) - new Date(booking.check_in)) / (1000 * 60 * 60 * 24)));
+            const pricePerNight = booking.offer?.discount_price || booking.offer?.price || booking.offer?.price_per_night || 0;
+            const baseTotal = nights * Number(pricePerNight);
+            totalCalcPrice = baseTotal;
+            if (booking.booking_type === 'bed') {
+                const guests = Math.max(1, booking.guests || 1);
+                totalCalcPrice = Math.round(baseTotal / (booking.offer?.room?.capacity || 4)) * guests;
+            }
+        }
         const depositPaid = booking.deposit_amount || 0;
-        const remaining = booking.remaining_amount ?? (totalCalcPrice - depositPaid);
+        const remaining = booking.remaining_amount ?? Math.max(0, totalCalcPrice - depositPaid);
 
         const resolveName = (val) => {
             if (!val) return '';
@@ -1338,3 +1348,5 @@ export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, p
         </div>
     );
 }
+
+

@@ -1646,10 +1646,12 @@ const AdvancedSearch = ({ filters, setFilters, lang, onSearch, onSaveSearch, set
   useEffect(() => {
     const fetchCities = async () => {
       const uniqueCities = await hotelService.getUniqueCities();
+      const baseCities = ['makkah', 'madinah'];
       if (uniqueCities && uniqueCities.length > 0) {
-        setCities(uniqueCities);
+        const combined = new Set([...baseCities, ...uniqueCities.map(c => c.toLowerCase())]);
+        setCities(Array.from(combined));
       } else {
-        setCities(['makkah', 'madinah']); // Fallback
+        setCities(baseCities);
       }
     };
     fetchCities();
@@ -2725,7 +2727,7 @@ export default function TalbiaApp() {
 
   const resetSearch = async () => {
     setFilters({ city: 'makkah', hotelName: '', dates: { start: null, end: null }, capacity: 'all', type: 'room', budget: 35000 });
-    // Hook will auto-refetch
+    setSearchTriggered(false);
   };
 
   // Memoization for Search

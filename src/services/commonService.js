@@ -206,8 +206,8 @@ export const commonService = {
         let fileToUpload = file;
         try {
             const options = {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
+                maxSizeMB: 0.3,
+                maxWidthOrHeight: 1280,
                 useWebWorker: true,
             };
             fileToUpload = await imageCompression(file, options);
@@ -225,3 +225,4 @@ export const commonService = {
         return data.publicUrl;
     }
 };
+

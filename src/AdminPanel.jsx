@@ -1346,3 +1346,4 @@ export default function AdminPanel({ lang, setLang, setRole, onLogout }) {
         </div>
     );
 }
+

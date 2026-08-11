@@ -11,14 +11,21 @@ import { supabase } from '../lib/supabase';
 import { bookingService } from '../services/bookingService';
 
 // Status Badge Component (reused locally or imported if shared)
-const StatusBadge = ({ status, deposit_paid, t, lang }) => {
-    if (status === 'paid') {
+const StatusBadge = ({ status, deposit_paid, t, lang, booking }) => {
+    let effectiveStatus = status;
+    if (booking && (status === 'paid' || status === 'confirmed')) {
+        const remaining = booking.remaining_amount ?? ((booking.total_price || 0) - (booking.deposit_amount || 0));
+        if (remaining > 0) effectiveStatus = 'confirmed';
+        else effectiveStatus = 'paid';
+    }
+
+    if (effectiveStatus === 'paid') {
         return <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200 shadow-sm">{lang === 'ar' ? 'تم الحجز' : 'Booked'}</span>;
     }
-    if (status === 'confirmed') {
+    if (effectiveStatus === 'confirmed') {
         return <span className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-100 text-cyan-800 border border-cyan-200 shadow-sm">{lang === 'ar' ? 'العربون مدفوع بانتظار إتمام الدفع' : 'Deposit Paid, Waiting Completion'}</span>;
     }
-    if (status === 'pending') {
+    if (effectiveStatus === 'pending') {
         return <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">{lang === 'ar' ? 'بانتظار الدفع' : 'Waiting Payment'}</span>;
     }
 
@@ -32,7 +39,7 @@ const StatusBadge = ({ status, deposit_paid, t, lang }) => {
         cancelled: lang === 'ar' ? 'ملغي' : 'Cancelled',
         completed: lang === 'ar' ? 'مكتمل' : 'Completed'
     };
-    return <span className={`px-3 py-1 rounded-full text-xs font-bold ${styles[status] || 'bg-gray-100'}`}>{labels[status] || status}</span>;
+    return <span className={`px-3 py-1 rounded-full text-xs font-bold ${styles[effectiveStatus] || 'bg-gray-100'}`}>{labels[effectiveStatus] || effectiveStatus}</span>;
 };
 
 // BottomSheet Component (reused locally or imported if shared)
@@ -132,7 +139,7 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
                         <div className="relative h-36">
                             <img src={room.images?.[0] || hotel.images?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500'} alt="" className="w-full h-full object-cover" />
                             <div className={`absolute top-3 ${lang === 'ar' ? 'left-3' : 'right-3'}`}>
-                                <StatusBadge status={booking.status} deposit_paid={booking.deposit_paid} t={t} lang={lang} />
+                                <StatusBadge booking={booking} status={booking.status} deposit_paid={booking.deposit_paid} t={t} lang={lang} />
                             </div>
                         </div>
                         <div className="p-4">
@@ -154,59 +161,69 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
                                 <div className="flex gap-2">
                                     {/* Logic Fix 3: Strict Status Display Logic */}
                                     {/* We use StatusBadge in the image area, but we can also show action buttons here */}
-
-                                    {booking.status === 'confirmed' && (
-                                        <button className="px-3 py-1 text-xs font-bold text-cyan-700 bg-cyan-50 rounded-lg flex items-center gap-1"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const data = {
-                                                    booking_ref: booking.booking_ref || booking.id.slice(0, 8).toUpperCase(),
-                                                    customer_name: user?.user_metadata?.full_name || 'Guest',
-                                                    hotel_name: hotel.name ? (typeof hotel.name === 'object' ? (hotel.name[lang] || hotel.name['en']) : hotel.name) : 'Hotel',
-                                                    offer_name: offer.title ? (typeof offer.title === 'object' ? (offer.title[lang] || offer.title['en']) : offer.title) : 'Offer',
-                                                    check_in: booking.check_in,
-                                                    check_out: booking.check_out,
-                                                    total_price: totalPrice || offer.price || 0,
-                                                    deposit_paid: booking.deposit_amount || 0,
-                                                    remaining_amount: booking.remaining_amount || (totalPrice - (booking.deposit_amount || 0)),
-                                                    status: booking.status,
-                                                    booking_type: booking.booking_type,
-                                                    guests: booking.guests || 1,
-                                                    exchange_rate: exchangeRate
-                                                };
-                                                setPdfBookingData(data);
-                                                if (showToast) showToast(lang === 'ar' ? 'جاري تحميل الوصل...' : 'Downloading Receipt...');
-                                            }}
-                                        >
-                                            <Download size={14} /> {lang === 'ar' ? 'وصل العربون' : 'Deposit Receipt'}
-                                        </button>
-                                    )}
-                                    {booking.status === 'paid' && (
-                                        <button className="px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-lg flex items-center gap-1"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const data = {
-                                                    booking_ref: booking.booking_ref || booking.id.slice(0, 8).toUpperCase(),
-                                                    customer_name: user?.user_metadata?.full_name || 'Guest',
-                                                    hotel_name: hotel.name ? (typeof hotel.name === 'object' ? (hotel.name[lang] || hotel.name['en']) : hotel.name) : 'Hotel',
-                                                    offer_name: offer.title ? (typeof offer.title === 'object' ? (offer.title[lang] || offer.title['en']) : offer.title) : 'Offer',
-                                                    check_in: booking.check_in,
-                                                    check_out: booking.check_out,
-                                                    total_price: totalPrice || offer.price || 0,
-                                                    deposit_paid: booking.deposit_amount || 0,
-                                                    remaining_amount: booking.remaining_amount || (totalPrice - (booking.deposit_amount || 0)),
-                                                    status: booking.status,
-                                                    booking_type: booking.booking_type,
-                                                    guests: booking.guests || 1,
-                                                    exchange_rate: exchangeRate
-                                                };
-                                                setPdfBookingData(data);
-                                                if (showToast) showToast(lang === 'ar' ? 'جاري تحميل الوصل...' : 'Downloading Receipt...');
-                                            }}
-                                        >
-                                            <Download size={14} /> {lang === 'ar' ? 'تحميل الوصل' : 'Receipt'}
-                                        </button>
-                                    )}
+                                    {(() => {
+                                        let effStatus = booking.status;
+                                        if (booking.status === 'paid' || booking.status === 'confirmed') {
+                                            const remaining = booking.remaining_amount ?? (totalPrice - (booking.deposit_amount || 0));
+                                            effStatus = remaining > 0 ? 'confirmed' : 'paid';
+                                        }
+                                        return (
+                                            <>
+                                                {effStatus === 'confirmed' && (
+                                                    <button className="px-3 py-1 text-xs font-bold text-cyan-700 bg-cyan-50 rounded-lg flex items-center gap-1"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const data = {
+                                                                booking_ref: booking.booking_ref || booking.id.slice(0, 8).toUpperCase(),
+                                                                customer_name: user?.user_metadata?.full_name || 'Guest',
+                                                                hotel_name: hotel.name ? (typeof hotel.name === 'object' ? (hotel.name[lang] || hotel.name['en']) : hotel.name) : 'Hotel',
+                                                                offer_name: offer.title ? (typeof offer.title === 'object' ? (offer.title[lang] || offer.title['en']) : offer.title) : 'Offer',
+                                                                check_in: booking.check_in,
+                                                                check_out: booking.check_out,
+                                                                total_price: totalPrice || offer.price || 0,
+                                                                deposit_paid: booking.deposit_amount || 0,
+                                                                remaining_amount: booking.remaining_amount || (totalPrice - (booking.deposit_amount || 0)),
+                                                                status: booking.status,
+                                                                booking_type: booking.booking_type,
+                                                                guests: booking.guests || 1,
+                                                                exchange_rate: exchangeRate
+                                                            };
+                                                            setPdfBookingData(data);
+                                                            if (showToast) showToast(lang === 'ar' ? 'جاري تحميل الوصل...' : 'Downloading Receipt...');
+                                                        }}
+                                                    >
+                                                        <Download size={14} /> {lang === 'ar' ? 'وصل العربون' : 'Deposit Receipt'}
+                                                    </button>
+                                                )}
+                                                {effStatus === 'paid' && (
+                                                    <button className="px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-lg flex items-center gap-1"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const data = {
+                                                                booking_ref: booking.booking_ref || booking.id.slice(0, 8).toUpperCase(),
+                                                                customer_name: user?.user_metadata?.full_name || 'Guest',
+                                                                hotel_name: hotel.name ? (typeof hotel.name === 'object' ? (hotel.name[lang] || hotel.name['en']) : hotel.name) : 'Hotel',
+                                                                offer_name: offer.title ? (typeof offer.title === 'object' ? (offer.title[lang] || offer.title['en']) : offer.title) : 'Offer',
+                                                                check_in: booking.check_in,
+                                                                check_out: booking.check_out,
+                                                                total_price: totalPrice || offer.price || 0,
+                                                                deposit_paid: booking.deposit_amount || 0,
+                                                                remaining_amount: booking.remaining_amount || (totalPrice - (booking.deposit_amount || 0)),
+                                                                status: booking.status,
+                                                                booking_type: booking.booking_type,
+                                                                guests: booking.guests || 1,
+                                                                exchange_rate: exchangeRate
+                                                            };
+                                                            setPdfBookingData(data);
+                                                            if (showToast) showToast(lang === 'ar' ? 'جاري تحميل الوصل...' : 'Downloading Receipt...');
+                                                        }}
+                                                    >
+                                                        <Download size={14} /> {lang === 'ar' ? 'تحميل الوصل' : 'Receipt'}
+                                                    </button>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                     {/* Default confirmed badge handled by StatusBadge */}
 
                                     {booking.status === 'pending' && (

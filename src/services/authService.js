@@ -144,3 +144,4 @@ export const authService = {
         return data.publicUrl;
     }
 };
+

@@ -283,7 +283,7 @@ export const bookingService = {
         // Fetch Customer Profile for Auto-fill
         const { data: profile } = await supabase
             .from('profiles')
-            .select('full_name, phone_number, email')
+            .select('full_name, phone, email')
             .eq('id', userId)
             .single();
 
@@ -295,7 +295,7 @@ export const bookingService = {
             webhookEndpoint: webhookUrl,
             customerName: profile?.full_name || 'Guest User',
             customerEmail: profile?.email || 'guest@taskiin.com',
-            customerPhone: profile?.phone_number || ''
+            customerPhone: profile?.phone || ''
         };
 
         // 4. Call Supabase Edge Function

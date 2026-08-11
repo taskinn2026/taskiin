@@ -21,7 +21,7 @@ const VoucherTemplate = forwardRef(({ booking, lang = 'ar' }, ref) => {
     let totalAmount = booking.total_price;
     if (totalAmount == null) {
         const nights = Math.max(1, Math.ceil((new Date(booking.check_out) - new Date(booking.check_in)) / (1000 * 60 * 60 * 24)));
-        const pricePerNight = booking.offer?.discount_price || booking.offer?.price_per_night || 0;
+        const pricePerNight = booking.offer?.discount_price || booking.offer?.price || 0;
         const baseTotal = nights * Number(pricePerNight);
         totalAmount = baseTotal;
         if (booking.booking_type === 'bed') {

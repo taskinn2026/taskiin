@@ -132,12 +132,12 @@ export const hotelService = {
             .eq('is_active', true)
             .limit(5);
 
-        // Search by owner's phone or phone_number
+        // Search by owner's phone
         const { data: byPhone } = await supabase
             .from('hotels')
-            .select('id, name, city, owner:profiles!inner(id, phone, phone_number)')
+            .select('id, name, city, owner:profiles!inner(id, phone)')
             .eq('is_active', true)
-            .or(`phone.ilike.%${query}%,phone_number.ilike.%${query}%`, { foreignTable: 'profiles' })
+            .ilike('owner.phone', `%${query}%`)
             .limit(5);
 
         const combined = [...(byName || []), ...(byPhone || [])];
@@ -177,13 +177,9 @@ export const hotelService = {
         // Strict Performance: Filter in DB as much as possible
 
         // 1. Prepare Filter Values
-        const cityMap = { 'مكة': 'makkah', 'مكة المكرمة': 'makkah', 'mecca': 'makkah', 'المدينة': 'madinah', 'المدينة النبوية': 'madinah', 'medina': 'madinah' };
         let cityTerm = filters?.city?.toLowerCase().trim() || '';
-        // Map common spellings to standardized English that DB uses.
-        if (cityMap[cityTerm]) cityTerm = cityMap[cityTerm];
 
-
-        console.log(`[Search Debug] Raw Params: City="${cityTerm}", Cap=${filters?.capacity}, Type=${filters?.type}, Dates=${filters?.dates ? JSON.stringify(filters.dates) : 'None'}`);
+        console.log(`[Search Debug] Raw Params: City="${cityTerm}", Cap=${filters?.capacity}, Type=${filters?.type}, Dates=${filters?.dates ? JSON.stringify(filters.dates) : 'None'}, Name=${filters?.hotelName || 'None'}`);
 
         // 2. Build Query with !inner joins + Bookings Preview (for Avatars)
         let dbQuery = supabase
@@ -214,12 +210,8 @@ export const hotelService = {
 
         // 3. Apply DB Filters
 
-        // A. City Filter
-        if (cityTerm) {
-            // Using ilike on standard term. 
-            // Note: Supabase JS syntax for nested filter: .ilike('room.hotel.city', ...) works with !inner
-            dbQuery = dbQuery.ilike('room.hotel.city', `%${cityTerm}%`);
-        }
+        // A. City Filter (Moved to JS step 5 for robust multi-lang support)
+        // B. Hotel Name Filter (Moved to JS step 5)
 
         // B. Date Availability (Offer Validity Period)
         if (filters?.dates?.start && filters?.dates?.end) {
@@ -251,6 +243,24 @@ export const hotelService = {
         // Return empty if no results from DB
         if (!data || data.length === 0) return [];
 
+        // 3.5 Memory filtering for City and Hotel Name to avoid multi-lang DB mismatch
+        const filteredData = data.filter(offer => {
+            if (cityTerm) {
+                const c = offer.room?.hotel?.city?.toLowerCase() || '';
+                const isMakkah = c.includes('مكة') || c.includes('makkah') || c.includes('mecca');
+                const isMadinah = c.includes('مدينة') || c.includes('madinah') || c.includes('medina');
+                if (cityTerm === 'makkah' && !isMakkah) return false;
+                if (cityTerm === 'madinah' && !isMadinah) return false;
+            }
+            if (filters?.hotelName) {
+                const hName = offer.room?.hotel?.name?.toLowerCase() || '';
+                if (!hName.includes(filters.hotelName.toLowerCase().trim())) return false;
+            }
+            return true;
+        });
+
+        if (filteredData.length === 0) return [];
+
         // 4. Fetch additional data needed for strict Bed Availability check (Bookings)
         // Only if we have date filters + Bed Type filter
         // Note: The 'bookings' fetched above are LIMIT 4 per offer (preview). 
@@ -261,8 +271,8 @@ export const hotelService = {
         let seasonalMap = {};
 
         if (filters?.dates?.start && filters?.dates?.end) {
-            const offerIds = data.map(o => o.id);
-            const roomIds = data.map(o => o.room.id);
+            const offerIds = filteredData.map(o => o.id);
+            const roomIds = filteredData.map(o => o.room.id);
 
             // A. Seasonal Prices
             if (roomIds.length > 0) {
@@ -295,7 +305,7 @@ export const hotelService = {
         }
 
         // 5. Client-Side Mapping & Final Filtering (Price & Exact Beds)
-        const finalResults = data.map(offer => {
+        const finalResults = filteredData.map(offer => {
             // Price Calculation (Seasonal)
             let finalPrice = offer.discount_price || offer.price_per_night;
             if (filters?.dates?.start && filters?.dates?.end) {
@@ -657,8 +667,8 @@ export const hotelService = {
         let fileToUpload = file;
         try {
             const options = {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
+                maxSizeMB: 0.3,
+                maxWidthOrHeight: 1280,
                 useWebWorker: true,
             };
             fileToUpload = await imageCompression(file, options);
@@ -705,3 +715,6 @@ export const hotelService = {
         if (error) throw error;
     }
 };
+
+
+

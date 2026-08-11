@@ -1836,13 +1836,27 @@ const HotelDetails = ({ hotel, onBack, lang, onOpenChat, filters, user, profile,
           </div>
           <button onClick={onBack} className="pointer-events-auto p-2.5 bg-white/90 backdrop-blur-md rounded-full text-gray-800 shadow-sm hover:bg-white transition-all"><ArrowRight size={20} className={lang === 'ar' ? "transform rotate-180" : ""} /></button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-1 aspect-[4/3] md:aspect-[21/9] w-full relative">
-          <div className="md:col-span-2 md:row-span-2 h-full relative group">
-            <img src={(hotel?.images && hotel.images[0]) || 'https://placehold.co/800x600/e2e8f0/64748b?text=No+Image'} className={`w-full h-full object-cover ${lang === 'ar' ? 'md:rounded-bl-2xl' : 'md:rounded-br-2xl'}`} alt="Main" />
+        {/* Mobile Images (Horizontal Scroll Snap) */}
+        <div className="md:hidden flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full aspect-[4/3]">
+          {(hotel?.images && hotel.images.length > 0 ? hotel.images : ['https://placehold.co/800x600/e2e8f0/64748b?text=No+Image']).map((img, i) => (
+            <div key={i} className="w-full h-full flex-shrink-0 snap-center relative">
+              <img src={img} className="w-full h-full object-cover" alt={`Image ${i}`} />
+              {/* Image Counter Badge */}
+              <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                {i + 1} / {hotel?.images?.length || 1}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Images (Grid) */}
+        <div className="hidden md:grid grid-cols-4 gap-1 aspect-[21/9] w-full relative">
+          <div className="col-span-2 row-span-2 h-full relative group">
+            <img src={(hotel?.images && hotel.images[0]) || 'https://placehold.co/800x600/e2e8f0/64748b?text=No+Image'} className={`w-full h-full object-cover ${lang === 'ar' ? 'rounded-bl-2xl' : 'rounded-br-2xl'}`} alt="Main" />
             <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
           </div>
           {(hotel?.images || []).slice(1, 5).map((img, i) => (
-            <div key={i} className="hidden md:block h-full relative group">
+            <div key={i} className="h-full relative group">
               <img src={img || 'https://placehold.co/400x300/e2e8f0/64748b?text=No+Image'} className="w-full h-full object-cover" alt={`Thumb ${i}`} />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
             </div>

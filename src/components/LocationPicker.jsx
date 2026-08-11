@@ -21,6 +21,15 @@ function MapEvents({ setPosition }) {
     return null;
 }
 
+// Component to recenter map when position changes
+function Recenter({ lat, lng }) {
+    const map = useMapEvents({});
+    useEffect(() => {
+        map.setView([lat, lng]);
+    }, [lat, lng, map]);
+    return null;
+}
+
 export default function LocationPicker({ lang, initialLat, initialLng, onLocationChange }) {
     // Default to Makkah (Haram) if no initial coordinates
     const defaultLat = 21.4225;
@@ -35,11 +44,24 @@ export default function LocationPicker({ lang, initialLat, initialLng, onLocatio
     const markerRef = useRef(null);
 
     // Update parent when position changes
+    // Using a ref to store the latest onLocationChange to avoid dependency issues
+    const onChangeRef = useRef(onLocationChange);
     useEffect(() => {
-        if (position && onLocationChange) {
-            onLocationChange(position.lat, position.lng);
+        onChangeRef.current = onLocationChange;
+    }, [onLocationChange]);
+
+    useEffect(() => {
+        if (position && onChangeRef.current) {
+            onChangeRef.current(position.lat, position.lng);
         }
-    }, [position, onLocationChange]);
+    }, [position]);
+
+    // Sync with external initialLat/initialLng (e.g. after data loads)
+    useEffect(() => {
+        if (initialLat && initialLng && (initialLat !== position.lat || initialLng !== position.lng)) {
+            setPosition({ lat: initialLat, lng: initialLng });
+        }
+    }, [initialLat, initialLng]);
 
     const eventHandlers = useMemo(
         () => ({
@@ -68,6 +90,7 @@ export default function LocationPicker({ lang, initialLat, initialLng, onLocatio
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
+                    <Recenter lat={position.lat} lng={position.lng} />
                     <MapEvents setPosition={setPosition} />
                     <Marker
                         draggable={true}

@@ -32,7 +32,9 @@ const VoucherTemplate = forwardRef(({ booking, lang = 'ar' }, ref) => {
 
     const remainingCalc = booking.remaining_amount ?? Math.max(0, totalAmount - depositPaidAmount);
     
-    const isPaid = booking.status === 'paid' || remainingCalc <= 0;
+    // Logic Fix: Only consider "Paid" if remaining is zero.
+    // The DB status might be 'paid' for partial payments due to webhook defaults.
+    const isPaid = remainingCalc <= 0;
 
     const t = {
         title: isRTL ? 'تلبية تسكين' : 'Talbiyah Taskin',

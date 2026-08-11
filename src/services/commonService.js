@@ -118,7 +118,7 @@ export const commonService = {
     updateAppSettings: async (key, value) => {
         const { error } = await supabase
             .from('app_settings')
-            .upsert({ key, value, updated_at: new Date() }, { onConflict: 'key' });
+            .upsert({ key, value }, { onConflict: 'key' });
         if (error) throw error;
         return true;
     },

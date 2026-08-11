@@ -348,38 +348,40 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
                             </div>
                         )}
 
-                        {/* PDF Download Button */}
-                        <button
-                            onClick={() => {
-                                const data = {
-                                    booking_ref: selectedBooking.booking_ref || selectedBooking.id.slice(0, 8).toUpperCase(),
-                                    customer_name: user?.user_metadata?.full_name || 'Guest',
-                                    hotel_name: selectedBooking.hotel.name ? (typeof selectedBooking.hotel.name === 'object' ? (selectedBooking.hotel.name[lang] || selectedBooking.hotel.name['en']) : selectedBooking.hotel.name) : 'Hotel',
-                                    offer_name: selectedBooking.offer.title ? (typeof selectedBooking.offer.title === 'object' ? (selectedBooking.offer.title[lang] || selectedBooking.offer.title['en']) : selectedBooking.offer.title) : 'Offer',
-                                    check_in: selectedBooking.check_in || selectedBooking.checkIn,
-                                    check_out: selectedBooking.check_out || selectedBooking.checkOut,
-                                    booking_type: selectedBooking.type,
-                                    guests: selectedBooking.guests || 1,
-                                    // Calculate total on the fly for Modal
-                                    deposit_paid: selectedBooking.deposit_amount || 0,
-                                    total_price: selectedBooking.totalPrice || selectedBooking.total_price || 0,
-                                    remaining_amount: selectedBooking.remaining_amount || ((selectedBooking.totalPrice || 0) - (selectedBooking.deposit_amount || 0)),
-                                    status: selectedBooking.status,
-                                    exchange_rate: exchangeRate
-                                };
-                                setPdfBookingData(data);
-                                // Show loading feedback
-                                if (showToast) showToast(lang === 'ar' ? 'جاري تحميل الوصل...' : 'Downloading Receipt...');
-                                // Delay handled by effect now (or keep simple)
-                            }}
-                            className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
-                        >
-                            <Download size={18} />
-                            {lang === 'ar'
-                                ? (selectedBooking.status === 'paid' ? 'تحميل وصل الحجز النهائي (PDF)' : 'تحميل وصل العربون (PDF)')
-                                : (selectedBooking.status === 'paid' ? 'Download Final Booking Receipt (PDF)' : 'Download Deposit Voucher (PDF)')
-                            }
-                        </button>
+                        {/* PDF Download Button - Only show if actually paid something */}
+                        {(selectedBooking.status === 'paid' || selectedBooking.status === 'confirmed') && (
+                            <button
+                                onClick={() => {
+                                    const data = {
+                                        booking_ref: selectedBooking.booking_ref || selectedBooking.id.slice(0, 8).toUpperCase(),
+                                        customer_name: user?.user_metadata?.full_name || 'Guest',
+                                        hotel_name: selectedBooking.hotel.name ? (typeof selectedBooking.hotel.name === 'object' ? (selectedBooking.hotel.name[lang] || selectedBooking.hotel.name['en']) : selectedBooking.hotel.name) : 'Hotel',
+                                        offer_name: selectedBooking.offer.title ? (typeof selectedBooking.offer.title === 'object' ? (selectedBooking.offer.title[lang] || selectedBooking.offer.title['en']) : selectedBooking.offer.title) : 'Offer',
+                                        check_in: selectedBooking.check_in || selectedBooking.checkIn,
+                                        check_out: selectedBooking.check_out || selectedBooking.checkOut,
+                                        booking_type: selectedBooking.type,
+                                        guests: selectedBooking.guests || 1,
+                                        // Calculate total on the fly for Modal
+                                        deposit_paid: selectedBooking.deposit_amount || 0,
+                                        total_price: selectedBooking.totalPrice || selectedBooking.total_price || 0,
+                                        remaining_amount: selectedBooking.remaining_amount || ((selectedBooking.totalPrice || 0) - (selectedBooking.deposit_amount || 0)),
+                                        status: selectedBooking.status,
+                                        exchange_rate: exchangeRate
+                                    };
+                                    setPdfBookingData(data);
+                                    // Show loading feedback
+                                    if (showToast) showToast(lang === 'ar' ? 'جاري تحميل الوصل...' : 'Downloading Receipt...');
+                                    // Delay handled by effect now (or keep simple)
+                                }}
+                                className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <Download size={18} />
+                                {lang === 'ar'
+                                    ? (selectedBooking.status === 'paid' ? 'تحميل وصل الحجز النهائي (PDF)' : 'تحميل وصل العربون (PDF)')
+                                    : (selectedBooking.status === 'paid' ? 'Download Final Booking Receipt (PDF)' : 'Download Deposit Voucher (PDF)')
+                                }
+                            </button>
+                        )}
                     </div>
                 )}
             </BottomSheet>

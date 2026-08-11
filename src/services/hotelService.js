@@ -177,10 +177,9 @@ export const hotelService = {
         // Strict Performance: Filter in DB as much as possible
 
         // 1. Prepare Filter Values
-        const cityMap = { 'mecca': 'مكة', 'makkah': 'مكة', 'medina': 'المدينة', 'madinah': 'المدينة' };
+        const cityMap = { 'مكة': 'makkah', 'مكة المكرمة': 'makkah', 'mecca': 'makkah', 'المدينة': 'madinah', 'المدينة النبوية': 'madinah', 'medina': 'madinah' };
         let cityTerm = filters?.city?.toLowerCase().trim() || '';
-        // Map common English spellings to Arabic if that's what DB uses, or vice versa.
-        // Assuming DB stores standardized Arabic or English.
+        // Map common spellings to standardized English that DB uses.
         if (cityMap[cityTerm]) cityTerm = cityMap[cityTerm];
 
 

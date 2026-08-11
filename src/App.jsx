@@ -1649,7 +1649,7 @@ const AdvancedSearch = ({ filters, setFilters, lang, onSearch, onSaveSearch, set
       if (uniqueCities && uniqueCities.length > 0) {
         setCities(uniqueCities);
       } else {
-        setCities(['Makkah', 'Madinah']); // Fallback
+        setCities(['makkah', 'madinah']); // Fallback
       }
     };
     fetchCities();
@@ -1681,9 +1681,14 @@ const AdvancedSearch = ({ filters, setFilters, lang, onSearch, onSaveSearch, set
         <div className="flex justify-center mb-6"><div className="bg-gray-100 p-1 rounded-xl inline-flex"><button onClick={() => setFilters({ ...filters, type: 'room' })} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${filters.type === 'room' ? 'bg-white text-emerald-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t('fullRoom')}</button><button onClick={() => setFilters({ ...filters, type: 'bed' })} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${filters.type === 'bed' ? 'bg-white text-emerald-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t('bedOnly')}</button></div></div>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
           <div className="md:col-span-2 space-y-1.5"><label className={`text-xs font-bold text-gray-500 uppercase tracking-wider ${lang === 'ar' ? 'mr-1' : 'ml-1'}`}>{t('dest')}</label><div className="relative"><select value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} className={`w-full bg-gray-50 border-none rounded-xl py-3 ${lang === 'ar' ? 'pr-4 pl-8' : 'pl-4 pr-8'} font-semibold text-gray-900 focus:ring-2 focus:ring-emerald-500/20 cursor-pointer appearance-none hover:bg-gray-100`}>
-            {cities.map(city => (
-              <option key={city} value={city}>{city === 'Makkah' || city === 'مكة' ? t('makkah') : city === 'Madinah' || city === 'المدينة' ? t('madinah') : city}</option>
-            ))}
+            {cities.map(city => {
+              const c = city.toLowerCase();
+              return (
+                <option key={city} value={city}>
+                  {c === 'makkah' || c === 'مكة' ? t('makkah') : c === 'madinah' || c === 'المدينة' ? t('madinah') : city}
+                </option>
+              );
+            })}
           </select><ChevronDown className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none`} size={16} /></div></div>
           <div className="md:col-span-3 space-y-1.5 relative">
             <label className={`text-xs font-bold text-gray-500 uppercase tracking-wider ${lang === 'ar' ? 'mr-1' : 'ml-1'}`}>{t('hotel')}</label>
@@ -2526,7 +2531,7 @@ export default function TalbiaApp() {
   const [chatUser, setChatUser] = useState(null);
   const [voucher, setVoucher] = useState(null);
   const [isWhatsappOpen, setIsWhatsappOpen] = useState(false);
-  const [filters, setFilters] = useState({ city: 'Makkah', hotelName: '', dates: { start: null, end: null }, capacity: 'all', type: 'room', budget: 35000 });
+  const [filters, setFilters] = useState({ city: 'makkah', hotelName: '', dates: { start: null, end: null }, capacity: 'all', type: 'room', budget: 35000 });
   const [messageNotification, setMessageNotification] = useState(null);
   const [initialPilgrimTab, setInitialPilgrimTab] = useState('bookings');
   const [unreadCount, setUnreadCount] = useState(0);
@@ -2719,7 +2724,7 @@ export default function TalbiaApp() {
   // Search is now saved only when user explicitly clicks 'Search'.
 
   const resetSearch = async () => {
-    setFilters({ city: 'Makkah', hotelName: '', dates: { start: null, end: null }, capacity: 'all', type: 'room', budget: 35000 });
+    setFilters({ city: 'makkah', hotelName: '', dates: { start: null, end: null }, capacity: 'all', type: 'room', budget: 35000 });
     // Hook will auto-refetch
   };
 

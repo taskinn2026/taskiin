@@ -16,7 +16,11 @@ const VoucherTemplate = forwardRef(({ booking, lang = 'ar' }, ref) => {
         }
     }, [booking]);
 
-    const isPaid = booking.status === 'paid' || booking.remaining_amount === 0;
+    const depositPaidAmount = (booking.deposit_amount ?? booking.deposit_paid) || 0;
+    const totalAmount = booking.total_price || depositPaidAmount;
+    const remainingCalc = booking.remaining_amount ?? Math.max(0, totalAmount - depositPaidAmount);
+    
+    const isPaid = booking.status === 'paid' || remainingCalc === 0;
 
     const t = {
         title: isRTL ? 'تلبية تسكين' : 'Talbiyah Taskin',
@@ -118,8 +122,8 @@ const VoucherTemplate = forwardRef(({ booking, lang = 'ar' }, ref) => {
                                 <td className="p-3 text-[#111827]">{t.total}</td>
                                 <td className={`p-3 font-bold text-[#111827] ${isRTL ? 'text-left' : 'text-right'}`}>
                                     <div className="flex flex-col">
-                                        <span>{Math.round((booking.total_price || 0) / (booking.exchange_rate || 35.80)).toLocaleString()} SAR</span>
-                                        <span className="text-xs opacity-70" dir="ltr">({(booking.total_price || 0).toLocaleString()} {t.currency})</span>
+                                        <span>{Math.round(totalAmount / (booking.exchange_rate || 35.80)).toLocaleString()} SAR</span>
+                                        <span className="text-xs opacity-70" dir="ltr">({totalAmount.toLocaleString()} {t.currency})</span>
                                     </div>
                                 </td>
                             </tr>
@@ -127,8 +131,8 @@ const VoucherTemplate = forwardRef(({ booking, lang = 'ar' }, ref) => {
                                 <td className="p-3 text-[#047857]">{t.deposit}</td>
                                 <td className={`p-3 font-bold text-[#047857] ${isRTL ? 'text-left' : 'text-right'}`}>
                                     <div className="flex flex-col">
-                                        <span>{Math.round(((booking.deposit_amount ?? booking.deposit_paid) || 0) / (booking.exchange_rate || 35.80)).toLocaleString()} SAR</span>
-                                        <span className="text-xs opacity-70" dir="ltr">({((booking.deposit_amount ?? booking.deposit_paid) || 0).toLocaleString()} {t.currency})</span>
+                                        <span>{Math.round(depositPaidAmount / (booking.exchange_rate || 35.80)).toLocaleString()} SAR</span>
+                                        <span className="text-xs opacity-70" dir="ltr">({depositPaidAmount.toLocaleString()} {t.currency})</span>
                                     </div>
                                 </td>
                             </tr>
@@ -136,8 +140,8 @@ const VoucherTemplate = forwardRef(({ booking, lang = 'ar' }, ref) => {
                                 <td className={`p-3 font-bold ${isPaid ? 'text-[#047857]' : 'text-[#b91c1c]'}`}>{t.remaining}</td>
                                 <td className={`p-3 font-bold ${isPaid ? 'text-[#047857]' : 'text-[#b91c1c]'} text-lg ${isRTL ? 'text-left' : 'text-right'}`}>
                                     <div className="flex flex-col">
-                                        <span>{Math.round((booking.remaining_amount || 0) / (booking.exchange_rate || 35.80)).toLocaleString()} SAR</span>
-                                        <span className={`text-xs ${isPaid ? 'opacity-70' : 'opacity-80'}`} dir="ltr">({(booking.remaining_amount || 0).toLocaleString()} {t.currency})</span>
+                                        <span>{Math.round(remainingCalc / (booking.exchange_rate || 35.80)).toLocaleString()} SAR</span>
+                                        <span className={`text-xs ${isPaid ? 'opacity-70' : 'opacity-80'}`} dir="ltr">({remainingCalc.toLocaleString()} {t.currency})</span>
                                     </div>
                                 </td>
                             </tr>

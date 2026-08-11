@@ -1253,20 +1253,22 @@ const CheckoutFlow = ({ hotel, type, onClose, lang, dates, user, onBooked }) => 
           {step === 2 && (
             <div className="space-y-6 text-center">
               <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100">
-                <h4 className="font-bold text-emerald-900 mb-2">{lang === 'ar' ? 'دفع العربون فقط' : 'Pay Deposit Only'}</h4>
+                <h4 className="font-bold text-emerald-900 mb-2">{isOneNight ? (lang === 'ar' ? 'دفع المبلغ كاملاً' : 'Pay Full Amount') : (lang === 'ar' ? 'دفع العربون فقط' : 'Pay Deposit Only')}</h4>
                 <div className="text-3xl font-black text-emerald-700 mb-1">{deposit} {t('currency')}</div>
                 <p className="text-xs text-emerald-600">{lang === 'ar' ? 'يعادل سعر ليلة واحدة' : 'Equivalent to 1 night price'}</p>
               </div>
-              <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                <div className="flex justify-between items-start text-sm mb-1">
-                  <span className="text-gray-500 mt-2">{lang === 'ar' ? 'المبلغ المتبقي' : 'Remaining Amount'}</span>
-                  <div className="flex flex-col items-end">
-                    <span className="font-bold text-lg text-emerald-900">{Math.round(remaining / exchangeRate).toLocaleString()} SAR</span>
-                    <span className="text-xs text-gray-400" dir="ltr">({remaining.toLocaleString()} DZD)</span>
+              {!isOneNight && (
+                  <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <div className="flex justify-between items-start text-sm mb-1">
+                      <span className="text-gray-500 mt-2">{lang === 'ar' ? 'المبلغ المتبقي' : 'Remaining Amount'}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="font-bold text-lg text-emerald-900">{Math.round(remaining / exchangeRate).toLocaleString()} SAR</span>
+                        <span className="text-xs text-gray-400" dir="ltr">({remaining.toLocaleString()} DZD)</span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2 text-start">{lang === 'ar' ? 'يدفع عند الوصول للفندق، يخضع السعر لرسوم الصرف' : 'Pay at hotel upon arrival. The exact dual rate depends on market changes.'}</p>
                   </div>
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2 text-start">{lang === 'ar' ? 'يدفع عند الوصول للفندق، يخضع السعر لرسوم الصرف' : 'Pay at hotel upon arrival. The exact dual rate depends on market changes.'}</p>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -1411,6 +1413,49 @@ const BookingVoucherPage = ({ booking, onBack, lang }) => {
         )}
       </div>
     </div>
+  );
+};
+
+const Footer = ({ lang }) => {
+  const [links, setLinks] = useState([]);
+  useEffect(() => {
+    const fetchLinks = async () => {
+      const data = await commonService.getAppSettings('footer_links');
+      if (data && Array.isArray(data)) {
+        setLinks(data);
+      } else {
+        // Default fallback
+        setLinks([
+          { title: 'من نحن', url: '/#about' },
+          { title: 'الشروط والأحكام', url: '/#terms' },
+          { title: 'تواصل معنا', url: '/#contact' }
+        ]);
+      }
+    };
+    fetchLinks();
+  }, []);
+
+  return (
+    <footer className="bg-gray-900 text-white py-12 mt-auto">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="md:col-span-1 flex items-center gap-2">
+            <div className="w-10 h-10 flex items-center justify-center"><img src={logo} alt="Talbiyah" className="w-full h-full object-contain filter brightness-0 invert opacity-80" /></div>
+            <span className="text-xl font-bold tracking-tight text-white">{lang === 'ar' ? 'تلبية' : 'Talbia'}<span className="text-emerald-400">{lang === 'ar' ? 'تسكين' : 'Taskin'}</span></span>
+          </div>
+          <div className="md:col-span-3 flex flex-wrap gap-x-8 gap-y-4 md:justify-end">
+            {links.map((link, idx) => (
+              <a key={idx} href={link.url} className="text-gray-400 hover:text-white transition-colors text-sm font-medium">
+                {link.title}
+              </a>
+            ))}
+          </div>
+        </div>
+        <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+          <p>&copy; {new Date().getFullYear()} Talbia Taskin. {lang === 'ar' ? 'جميع الحقوق محفوظة.' : 'All rights reserved.'}</p>
+        </div>
+      </div>
+    </footer>
   );
 };
 
@@ -1595,7 +1640,20 @@ const AdvancedSearch = ({ filters, setFilters, lang, onSearch, onSaveSearch, set
   const [searchTerm, setSearchTerm] = useState(filters.hotelName || "");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const [cities, setCities] = useState([]);
   const t = useTranslation(lang);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      const uniqueCities = await hotelService.getUniqueCities();
+      if (uniqueCities && uniqueCities.length > 0) {
+        setCities(uniqueCities);
+      } else {
+        setCities(['Makkah', 'Madinah']); // Fallback
+      }
+    };
+    fetchCities();
+  }, []);
 
   // Autocomplete
   useEffect(() => {
@@ -1622,7 +1680,11 @@ const AdvancedSearch = ({ filters, setFilters, lang, onSearch, onSaveSearch, set
       <div className="bg-white rounded-3xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.08)] border border-gray-100 p-6 max-w-5xl mx-auto relative z-30">
         <div className="flex justify-center mb-6"><div className="bg-gray-100 p-1 rounded-xl inline-flex"><button onClick={() => setFilters({ ...filters, type: 'room' })} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${filters.type === 'room' ? 'bg-white text-emerald-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t('fullRoom')}</button><button onClick={() => setFilters({ ...filters, type: 'bed' })} className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${filters.type === 'bed' ? 'bg-white text-emerald-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t('bedOnly')}</button></div></div>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-          <div className="md:col-span-2 space-y-1.5"><label className={`text-xs font-bold text-gray-500 uppercase tracking-wider ${lang === 'ar' ? 'mr-1' : 'ml-1'}`}>{t('dest')}</label><div className="relative"><select value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} className={`w-full bg-gray-50 border-none rounded-xl py-3 ${lang === 'ar' ? 'pr-4 pl-8' : 'pl-4 pr-8'} font-semibold text-gray-900 focus:ring-2 focus:ring-emerald-500/20 cursor-pointer appearance-none hover:bg-gray-100`}><option value="Makkah">{t('makkah')}</option><option value="Madinah">{t('madinah')}</option></select><ChevronDown className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none`} size={16} /></div></div>
+          <div className="md:col-span-2 space-y-1.5"><label className={`text-xs font-bold text-gray-500 uppercase tracking-wider ${lang === 'ar' ? 'mr-1' : 'ml-1'}`}>{t('dest')}</label><div className="relative"><select value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} className={`w-full bg-gray-50 border-none rounded-xl py-3 ${lang === 'ar' ? 'pr-4 pl-8' : 'pl-4 pr-8'} font-semibold text-gray-900 focus:ring-2 focus:ring-emerald-500/20 cursor-pointer appearance-none hover:bg-gray-100`}>
+            {cities.map(city => (
+              <option key={city} value={city}>{city === 'Makkah' || city === 'مكة' ? t('makkah') : city === 'Madinah' || city === 'المدينة' ? t('madinah') : city}</option>
+            ))}
+          </select><ChevronDown className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none`} size={16} /></div></div>
           <div className="md:col-span-3 space-y-1.5 relative">
             <label className={`text-xs font-bold text-gray-500 uppercase tracking-wider ${lang === 'ar' ? 'mr-1' : 'ml-1'}`}>{t('hotel')}</label>
             <div className="relative">
@@ -2874,6 +2936,7 @@ export default function TalbiaApp() {
                 {hotels.length > 0 ? (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">{hotels.map((hotel, index) => (<div key={hotel.offerId || `hotel-${index}`} onClick={() => setSelectedHotel(hotel)}><RoomCard hotel={hotel} lang={lang} user={user} isFavorite={(favoritesIds || []).includes(hotel.offerId || hotel.id)} onToggleFavorite={handleToggleFavorite} onClick={() => setSelectedHotel(hotel)} /></div>))}</div>) : (<div className="text-center py-20 bg-white rounded-3xl border border-gray-100"><div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400"><Search size={32} /></div><h3 className="text-xl font-bold text-gray-900">{t('noResults')}</h3><button onClick={() => resetSearch()} className="mt-6 text-emerald-800 font-bold hover:underline">{t('resetFilters')}</button></div>)}
               </div>
             </div>
+            <Footer lang={lang} />
           </>
         )}
         <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onLogin={handleLogin} lang={lang} setLang={setLang} />

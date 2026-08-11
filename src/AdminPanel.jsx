@@ -61,7 +61,7 @@ const ADMIN_T = {
 // Checked 'DashboardSection' - it uses 'lang' but wasn't receiving it in some calls? 
 // The issues were likely in the 'AdminSidebar' or 'DashboardSection' usage.
 
-const AdminSidebar = ({ activeSection, setActiveSection, lang, t, setRole, onLogout }) => {
+const AdminSidebar = ({ activeSection, setActiveSection, lang, t, setRole, onLogout, isOpen, onClose }) => {
     const menuItems = [
         { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard },
         { id: 'offers', icon: Briefcase, label: t.offers },
@@ -72,7 +72,7 @@ const AdminSidebar = ({ activeSection, setActiveSection, lang, t, setRole, onLog
     ];
     // Fix: Ensure key unique
     return (
-        <aside className={`fixed top-0 ${lang === 'ar' ? 'right-0' : 'left-0'} h-full w-64 bg-white border-${lang === 'ar' ? 'l' : 'r'} border-gray-100 flex flex-col z-40`}>
+        <aside className={`fixed top-0 ${lang === 'ar' ? 'right-0' : 'left-0'} h-full w-64 bg-white border-${lang === 'ar' ? 'l' : 'r'} border-gray-100 flex flex-col z-40 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : (lang === 'ar' ? 'translate-x-full md:translate-x-0' : '-translate-x-full md:translate-x-0')}`}>
             <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center gap-3 cursor-pointer" onClick={() => setRole('user')}>
                     <div className="w-10 h-10 bg-emerald-800 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
@@ -87,7 +87,7 @@ const AdminSidebar = ({ activeSection, setActiveSection, lang, t, setRole, onLog
             </div>
             <nav className="flex-1 p-4 space-y-1">
                 {menuItems.map(item => (
-                    <button key={item.id} onClick={() => setActiveSection(item.id)}
+                    <button key={item.id} onClick={() => { setActiveSection(item.id); if (onClose) onClose(); }}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeSection === item.id ? 'bg-emerald-50 text-emerald-800' : 'text-gray-600 hover:bg-gray-50'
                             }`}>
                         <item.icon size={20} />
@@ -682,6 +682,7 @@ const MarketingSection = ({ t, lang }) => {
     const [banners, setBanners] = useState([]);
     const [seasonBanners, setSeasonBanners] = useState([]); // New state
     const [seasonBannerModal, setSeasonBannerModal] = useState({ open: false, banner: null }); // New modal state
+    const [footerLinks, setFooterLinks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploadingBanner, setUploadingBanner] = useState(false);
 
@@ -761,12 +762,14 @@ const MarketingSection = ({ t, lang }) => {
 
     const fetchBanners = async () => {
         setLoading(true);
-        const [bannersData, seasonBannersData] = await Promise.all([
+        const [bannersData, seasonBannersData, footerData] = await Promise.all([
             commonService.getAllBanners(),
-            commonService.getAdminSeasonBanners().catch(e => { console.error('No season_banners table yet', e); return []; })
+            commonService.getAdminSeasonBanners().catch(e => { console.error('No season_banners table yet', e); return []; }),
+            commonService.getAppSettings('footer_links').catch(e => [])
         ]);
         setBanners(bannersData || []);
         setSeasonBanners(seasonBannersData || []);
+        setFooterLinks(footerData || []);
         setLoading(false);
     };
 
@@ -873,6 +876,16 @@ const MarketingSection = ({ t, lang }) => {
     const seasonBanner = banners.find(b => b.type === 'season') || null;
     const promoBanners = banners.filter(b => b.type === 'promo');
 
+    const handleSaveFooter = async () => {
+        try {
+            await commonService.updateAppSettings('footer_links', footerLinks);
+            toast.success(lang === 'ar' ? 'تم حفظ روابط الفوتر' : 'Footer links saved');
+        } catch (e) {
+            console.error(e);
+            toast.error(lang === 'ar' ? 'فشل حفظ الروابط' : 'Failed to save links');
+        }
+    };
+
     // Helper to safely get title/desc
     const getText = (obj) => {
         if (!obj) return '';
@@ -973,6 +986,24 @@ const MarketingSection = ({ t, lang }) => {
                     )) : (
                         <div className="text-center py-4 text-gray-400">{lang === 'ar' ? 'لا توجد بانرات' : 'No promo banners'}</div>
                     )}
+                </div>
+            </div>
+
+            {/* Footer Settings */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-gray-900">{lang === 'ar' ? 'روابط الفوتر' : 'Footer Links'}</h3>
+                    <button onClick={handleSaveFooter} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold"><Save size={16} />{t.save}</button>
+                </div>
+                <div className="space-y-3">
+                    {footerLinks.map((link, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                            <input type="text" placeholder={lang === 'ar' ? 'العنوان' : 'Title'} value={link.title} onChange={e => { const newL = [...footerLinks]; newL[idx].title = e.target.value; setFooterLinks(newL); }} className="flex-1 border border-gray-200 rounded-lg p-2" />
+                            <input type="text" placeholder={lang === 'ar' ? 'الرابط' : 'URL'} value={link.url} onChange={e => { const newL = [...footerLinks]; newL[idx].url = e.target.value; setFooterLinks(newL); }} className="flex-1 border border-gray-200 rounded-lg p-2" />
+                            <button onClick={() => { const newL = footerLinks.filter((_, i) => i !== idx); setFooterLinks(newL); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => setFooterLinks([...footerLinks, {title: '', url: ''}])} className="text-emerald-600 font-bold text-sm">+ {lang === 'ar' ? 'إضافة رابط' : 'Add Link'}</button>
                 </div>
             </div>
 
@@ -1265,7 +1296,12 @@ const InsightsSection = ({ t, lang }) => {
 
 // Main Admin Panel
 export default function AdminPanel({ lang, setLang, setRole, onLogout }) {
-    const [activeSection, setActiveSection] = useState('dashboard');
+    const [activeSection, setActiveSection] = useState(window.location.hash.replace('#', '') || 'dashboard');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        window.location.hash = activeSection;
+    }, [activeSection]);
     const t = ADMIN_T[lang];
 
     const renderSection = () => {
@@ -1282,10 +1318,20 @@ export default function AdminPanel({ lang, setLang, setRole, onLogout }) {
 
     return (
         <div className={`min-h-screen bg-stone-50 font-[Tajawal]`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-            <AdminSidebar activeSection={activeSection} setActiveSection={setActiveSection} lang={lang} t={t} setRole={setRole} onLogout={onLogout} />
-            <div className={`${lang === 'ar' ? 'mr-64' : 'ml-64'} min-h-screen`}>
-                <header className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center sticky top-0 z-30">
-                    <h1 className="text-xl font-bold text-gray-900">{t[activeSection]}</h1>
+            {/* Mobile Backdrop */}
+            {sidebarOpen && (
+                <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+            )}
+            
+            <AdminSidebar activeSection={activeSection} setActiveSection={setActiveSection} lang={lang} t={t} setRole={setRole} onLogout={onLogout} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <div className={`${lang === 'ar' ? 'md:mr-64' : 'md:ml-64'} min-h-screen transition-all duration-300`}>
+                <header className="bg-white border-b border-gray-100 px-4 md:px-6 py-4 flex justify-between items-center sticky top-0 z-30 shadow-sm md:shadow-none">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => setSidebarOpen(true)} className="p-2 -mx-2 hover:bg-gray-100 rounded-xl md:hidden text-gray-700">
+                            <Menu size={24} />
+                        </button>
+                        <h1 className="text-xl font-bold text-gray-900">{t[activeSection]}</h1>
+                    </div>
                     <div className="flex items-center gap-4">
                         <NotificationBellAdmin />
                         <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl">

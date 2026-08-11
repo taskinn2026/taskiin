@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import imageCompression from 'browser-image-compression';
 
 // Helper to dispatch visual logs
 const dispatchNetworkEvent = (method, url, status = 'OK') => {
@@ -100,6 +101,28 @@ export const commonService = {
         return data;
     },
 
+    // 6. Settings (Footer, etc)
+    getAppSettings: async (key) => {
+        const { data, error } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', key)
+            .maybeSingle();
+        if (error) {
+            console.error('Error fetching settings:', error);
+            return null;
+        }
+        return data?.value || null;
+    },
+
+    updateAppSettings: async (key, value) => {
+        const { error } = await supabase
+            .from('app_settings')
+            .upsert({ key, value, updated_at: new Date() }, { onConflict: 'key' });
+        if (error) throw error;
+        return true;
+    },
+
     toggleBanner: async (id, isActive) => {
         const { error } = await supabase
             .from('banners')
@@ -176,15 +199,25 @@ export const commonService = {
     },
 
     uploadBannerImage: async (file) => {
-        if (!file) throw new Error('No file provided');
-
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-        const filePath = `banners/${fileName}`;
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        let fileToUpload = file;
+        try {
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+            };
+            fileToUpload = await imageCompression(file, options);
+        } catch (error) {
+            console.error('Error compressing image:', error);
+        }
 
         const { error: uploadError } = await supabase.storage
-            .from('rooms')
-            .upload(filePath, file, { cacheControl: '3600', upsert: false });
+            .from('banners')
+            .upload(filePath, fileToUpload, { cacheControl: '3600', upsert: false });
 
         if (uploadError) throw uploadError;
 

@@ -950,7 +950,11 @@ const NotificationBell = ({ user, lang, onNavigate }) => {
 export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, profile, onClose, onSelectHotel, initialTab = 'bookings', isUserOnline, showToast }) {
     const { loading } = useData(); // Consume global data
     // roommates, favorites, payments Removed from global context to lazy load
-    const [activeSection, setActiveSection] = useState(initialTab);
+    const [activeSection, setActiveSection] = useState(window.location.hash.replace('#', '') || initialTab);
+    
+    useEffect(() => {
+        window.location.hash = activeSection;
+    }, [activeSection]);
     const [chatUser, setChatUser] = useState(null);
     const [messageDropdownOpen, setMessageDropdownOpen] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState([]);

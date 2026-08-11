@@ -1,6 +1,7 @@
 
 import { supabase } from '../lib/supabase';
 import { calculatePrice } from '../utils/pricing';
+import imageCompression from 'browser-image-compression';
 
 export const hotelService = {
     // 3. Featured Offers -> Returns Hotels with Offer Price
@@ -122,15 +123,42 @@ export const hotelService = {
     // 2.2 Hotel Name Autocomplete
     searchHotelsByName: async (query) => {
         if (!query || query.length < 2) return [];
-        const { data, error } = await supabase
+        
+        // Search by hotel name
+        const { data: byName } = await supabase
             .from('hotels')
             .select('id, name, city')
             .ilike('name', `%${query}%`)
             .eq('is_active', true)
             .limit(5);
 
-        if (error) return [];
-        return data;
+        // Search by owner's phone or phone_number
+        const { data: byPhone } = await supabase
+            .from('hotels')
+            .select('id, name, city, owner:profiles!inner(id, phone, phone_number)')
+            .eq('is_active', true)
+            .or(`phone.ilike.%${query}%,phone_number.ilike.%${query}%`, { foreignTable: 'profiles' })
+            .limit(5);
+
+        const combined = [...(byName || []), ...(byPhone || [])];
+        // Deduplicate by hotel id
+        const uniqueHotels = Array.from(new Map(combined.map(item => [item.id, item])).values());
+        
+        return uniqueHotels.slice(0, 5).map(h => ({ id: h.id, name: h.name, city: h.city }));
+    },
+
+    getUniqueCities: async () => {
+        const { data, error } = await supabase
+            .from('hotels')
+            .select('city')
+            .eq('is_active', true);
+        
+        if (error) {
+            console.error('Error fetching cities:', error);
+            return [];
+        }
+        
+        return Array.from(new Set(data.map(h => h.city).filter(Boolean)));
     },
 
     // 2.3 Mark Notifications Read
@@ -627,9 +655,21 @@ export const hotelService = {
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${fileName}`;
 
+        let fileToUpload = file;
+        try {
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+            };
+            fileToUpload = await imageCompression(file, options);
+        } catch (error) {
+            console.error('Error compressing image:', error);
+        }
+
         const { error: uploadError } = await supabase.storage
             .from('rooms')
-            .upload(filePath, file);
+            .upload(filePath, fileToUpload);
 
         if (uploadError) throw uploadError;
 

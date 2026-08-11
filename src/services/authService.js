@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import imageCompression from 'browser-image-compression';
 
 // Helper to dispatch visual logs
 const dispatchNetworkEvent = (method, url, status = 'OK') => {
@@ -117,14 +118,25 @@ export const authService = {
 
     // 1.3 Upload Avatar
     uploadAvatar: async (userId, file) => {
-        dispatchNetworkEvent('POST', `/storage/avatars/${userId}`);
         const fileExt = file.name.split('.').pop();
-        const fileName = `${userId}/${Math.random()}.${fileExt}`;
+        const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${fileName}`;
+
+        let fileToUpload = file;
+        try {
+            const options = {
+                maxSizeMB: 0.5,
+                maxWidthOrHeight: 800,
+                useWebWorker: true,
+            };
+            fileToUpload = await imageCompression(file, options);
+        } catch (error) {
+            console.error('Error compressing image:', error);
+        }
 
         const { error: uploadError } = await supabase.storage
             .from('avatars')
-            .upload(filePath, file);
+            .upload(filePath, fileToUpload);
 
         if (uploadError) throw uploadError;
 

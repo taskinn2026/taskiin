@@ -30,17 +30,28 @@ serve(async (req) => {
     // 1. Create a Customer in Chargily to auto-fill the checkout page
     let customerId = undefined;
     try {
+        // Chargily API is strict about phone formats and email validity.
+        // We will use safe dummy data if something is missing to ensure the customer is created.
+        const safeName = customerName && customerName.trim() !== '' ? customerName : 'عميل الموقع';
+        const safeEmail = customerEmail && customerEmail.includes('@') ? customerEmail : 'guest@taskiin.com';
+        
+        const customerPayload: any = {
+            name: safeName,
+            email: safeEmail
+        };
+
+        // Only add phone if it looks like a valid international number, otherwise Chargily might reject the whole request (422).
+        if (customerPhone && customerPhone.startsWith('+') && customerPhone.length >= 10) {
+            customerPayload.phone = customerPhone;
+        }
+
         const custRes = await fetch('https://pay.chargily.net/test/api/v2/customers', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${CHARGILY_SECRET_KEY}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                name: customerName || 'Guest User',
-                email: customerEmail || 'guest@taskiin.com',
-                phone: customerPhone || undefined
-            })
+            body: JSON.stringify(customerPayload)
         });
 
         if (custRes.ok) {
@@ -49,7 +60,6 @@ serve(async (req) => {
             console.log('Customer created successfully:', customerId);
         } else {
             console.error('Failed to create customer:', await custRes.text());
-            // Proceed without customer_id if it fails (so payment is not blocked)
         }
     } catch (custError) {
         console.error('Error creating customer:', custError);

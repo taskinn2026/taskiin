@@ -1109,6 +1109,14 @@ const Profile = ({ t, lang, hotel }) => {
                             <option value="madinah">{t.madinah}</option>
                         </select>
                     </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block">{lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}</label>
+                        <input value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" dir="ltr" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block">{lang === 'ar' ? 'المسافة عن الحرم (متر)' : 'Distance to Haram (m)'}</label>
+                        <input type="number" value={formData.distance_to_haram_meters || ''} onChange={e => setFormData({ ...formData, distance_to_haram_meters: parseInt(e.target.value) || 0 })} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" />
+                    </div>
                 </div>
                 <div className="mt-4 flex justify-end">
                     <button onClick={handleSave} disabled={loading} className="px-6 py-2 bg-emerald-800 text-white rounded-xl font-bold">{loading ? t.loading : t.save}</button>
@@ -1173,7 +1181,11 @@ const HotelSetupWizard = ({ t, lang, onSave, loading }) => {
 
 // ========== MAIN COMPONENT ==========
 export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
-    const [active, setActive] = useState('overview');
+    const [active, setActive] = useState(window.location.hash.replace('#', '') || 'overview');
+
+    useEffect(() => {
+        window.location.hash = active;
+    }, [active]);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [offerRoom, setOfferRoom] = useState(null);
     const [hotel, setHotel] = useState(null);

@@ -17,8 +17,11 @@ const PaymentSuccess = () => {
             bookingService.getBookingById(id)
                 .then(booking => {
                     if (booking && booking.status !== 'confirmed' && booking.status !== 'paid') {
+                        // Check if fully paid
+                        const isFullyPaid = booking.deposit_amount >= (booking.total_price || 0);
+                        const newStatus = isFullyPaid ? 'paid' : 'confirmed';
                         return Promise.all([
-                            bookingService.updateBookingStatus(id, 'confirmed', { deposit_paid: true }),
+                            bookingService.updateBookingStatus(id, newStatus, { deposit_paid: true }),
                             bookingService.createPayment(id, booking.deposit_amount || 0, 'chargily'),
                             // Frontend Notification sending removed. Database handles 'deposit paid' booking notifications directly.
                         ]);

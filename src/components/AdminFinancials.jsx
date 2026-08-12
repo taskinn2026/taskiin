@@ -125,9 +125,10 @@ export default function AdminFinancials({ lang = 'ar', currency = 'د.ج' }) {
             count: bookings.length,
             totalRevenue,
             totalDeposits,
-            totalCommission,
+            totalCommission, // This is 10% of total revenue
+            collectedCommission: totalDeposits * 0.10, // This is 10% of the deposits
             hotelBalances,
-            uncollected: (totalRevenue - totalDeposits) * 0.10,
+            uncollected: (totalRevenue - totalDeposits) * 0.10, // This is 10% of the remaining
         };
     }, [bookings, hotels]);
 
@@ -206,7 +207,7 @@ export default function AdminFinancials({ lang = 'ar', currency = 'د.ج' }) {
                         <KCard icon={Briefcase} accent="emerald" title={isAr ? 'إجمالي الحجوزات' : 'Total Bookings'} value={fmt(global.count)} />
                         <KCard icon={TrendingUp} accent="blue" title={isAr ? 'إجمالي قيمة الحجوزات' : 'Total Revenue'} value={fmt(global.totalRevenue)} sub={currency} />
                         <KCard icon={Wallet} accent="amber" title={isAr ? 'إجمالي العربون' : 'Total Deposits'} value={fmt(global.totalDeposits)} sub={currency} />
-                        <KCard icon={DollarSign} accent="red" title={isAr ? 'عمولة المنصة المحصلة' : 'Collected Commission'} value={fmt(global.totalCommission)} sub={currency} note={isAr ? `${avgRate}% من كل حجز` : `${avgRate}% of booking`} />
+                        <KCard icon={DollarSign} accent="red" title={isAr ? 'إجمالي عمولة المنصة' : 'Total Commission'} value={fmt(global.totalCommission)} sub={currency} note={isAr ? `${avgRate}% من كل حجز` : `${avgRate}% of booking`} />
                         <KCard icon={Building} accent="purple" title={isAr ? 'رصيد الفنادق داخل المنصة' : 'Hotel Balances'} value={fmt(global.hotelBalances)} sub={currency} note={isAr ? `${hotelPct}% من العربون` : `${hotelPct}% of deposit`} />
                         <KCard icon={AlertCircle} accent="green" title={isAr ? 'عمولات غير محصلة' : 'Uncollected Commission'} value={fmt(global.uncollected)} sub={currency} note={isAr ? `${avgRate}% من المتبقي` : `${avgRate}% of remaining`} />
                     </div>

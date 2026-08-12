@@ -377,8 +377,8 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
                             >
                                 <Download size={18} />
                                 {lang === 'ar'
-                                    ? (selectedBooking.status === 'paid' ? 'تحميل وصل الحجز النهائي (PDF)' : 'تحميل وصل العربون (PDF)')
-                                    : (selectedBooking.status === 'paid' ? 'Download Final Booking Receipt (PDF)' : 'Download Deposit Voucher (PDF)')
+                                    ? (selectedBooking.status === 'completed' ? 'تحميل وصل الحجز النهائي (PDF)' : 'تحميل وصل العربون (PDF)')
+                                    : (selectedBooking.status === 'completed' ? 'Download Final Booking Receipt (PDF)' : 'Download Deposit Voucher (PDF)')
                                 }
                             </button>
                         )}

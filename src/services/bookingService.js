@@ -5,7 +5,7 @@ export const bookingService = {
     // 5. Create Booking
     createBooking: async (bookingData) => {
         // Enforce valid status values logic to prevent DB constraint violation
-        const validStatuses = ['pending', 'confirmed', 'paid', 'cancelled'];
+        const validStatuses = ['pending', 'confirmed', 'paid', 'completed', 'cancelled'];
         // Default to pending if invalid or missing
         if (!bookingData.status || !validStatuses.includes(bookingData.status)) {
             console.warn(`Invalid status '${bookingData.status}' corrected to 'pending'`);
@@ -213,7 +213,7 @@ export const bookingService = {
 
     // Centralized Status Update (Canonical Flow)
     updateBookingStatus: async (bookingId, status, extraFields = {}) => {
-        const validStatuses = ['pending', 'confirmed', 'paid', 'cancelled'];
+        const validStatuses = ['pending', 'confirmed', 'paid', 'completed', 'cancelled'];
         if (!validStatuses.includes(status)) throw new Error(`Invalid status: ${status}`);
 
         const updateData = { status, ...extraFields };

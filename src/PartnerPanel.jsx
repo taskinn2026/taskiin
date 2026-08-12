@@ -813,13 +813,6 @@ const Overview = ({ t, lang, stats, alerts, recentBookings, hotel, onDeleteAlert
     </div>
 );
 
-const Bookings = ({ t, bookings, onStatusUpdate, lang, exchangeRate = 35.80 }) => (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-            <table className="w-full">
-                <thead className="bg-gray-50 text-xs font-bold text-gray-500 uppercase">
-                    <tr>
-                        <th className="px-4 py-3 text-start">ID</th>
                         <th className="px-4 py-3 text-start">{t.guestName}</th>
                         <th className="px-4 py-3 text-start">{lang === 'ar' ? 'العرض المرتبط' : 'Linked Offer'}</th>
                         <th className="px-4 py-3 text-center">{lang === 'ar' ? 'النوع' : 'Type'}</th>
@@ -884,7 +877,7 @@ const Bookings = ({ t, bookings, onStatusUpdate, lang, exchangeRate = 35.80 }) =
                             </td>
                             <td className="px-4 py-3 text-center"><Badge status={b.status} t={t} /></td>
                             <td className="px-4 py-3 text-center">
-                                {b.status === 'confirmed' && (
+                                {(b.status === 'confirmed' || b.status === 'paid') && (
                                     <button
                                         onClick={() => onStatusUpdate(b.id)}
                                         className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 flex items-center gap-1"
@@ -893,7 +886,7 @@ const Bookings = ({ t, bookings, onStatusUpdate, lang, exchangeRate = 35.80 }) =
                                         {lang === 'ar' ? 'إتمام الحجز' : 'Complete Booking'}
                                     </button>
                                 )}
-                                {b.status === 'paid' && (
+                                {b.status === 'completed' && (
                                     <span className="px-3 py-1.5 bg-gray-100 text-green-700 text-xs font-bold rounded-lg flex items-center gap-1 border border-green-200">
                                         <CheckCircle size={14} />
                                         {lang === 'ar' ? 'مكتمل' : 'Completed'}
@@ -906,7 +899,8 @@ const Bookings = ({ t, bookings, onStatusUpdate, lang, exchangeRate = 35.80 }) =
             </table>
         </div>
     </div>
-);
+    );
+};
 
 const Finance = ({ t, hotel }) => {
     const [modal, setModal] = useState(false);
@@ -956,12 +950,22 @@ const Finance = ({ t, hotel }) => {
 
     if (loading) return <div>{t.loading || 'Loading...'}</div>;
 
+    // Calculate Live Available Balance
+    const commissionRate = hotel?.commission_percent || 10;
+    const rate = commissionRate / 100;
+    const totalDeposits = myBookings
+        .filter(b => b.status === 'confirmed' || b.status === 'paid' || b.status === 'completed')
+        .reduce((sum, b) => sum + Number(b.deposit_amount || 0), 0);
+    const liveHotelBalance = totalDeposits * (1 - rate);
+    const totalPayouts = payouts.reduce((sum, p) => sum + Number(p.amount), 0);
+    const availableBalance = Math.max(0, liveHotelBalance - totalPayouts);
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-gradient-to-br from-emerald-800 to-emerald-900 text-white p-5 rounded-2xl shadow-lg shadow-emerald-900/10">
                     <div className="text-sm opacity-80 mb-2">{t.netProfit || 'Wallet Balance'}</div>
-                    <div className="text-3xl font-bold">{wallet.balance.toLocaleString()} {t.currency || 'DZD'}</div>
+                    <div className="text-3xl font-bold">{availableBalance.toLocaleString()} {t.currency || 'DZD'}</div>
                 </div>
                 <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100">
                     <div className="text-sm text-amber-700 mb-2">{t.pendingPayouts || 'Pending Withdrawals'}</div>
@@ -972,7 +976,7 @@ const Finance = ({ t, hotel }) => {
             </div>
 
             <div className="flex gap-4">
-                <button onClick={() => setModal(true)} disabled={wallet.balance <= 0} className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-800 text-white rounded-xl font-bold hover:bg-emerald-900 disabled:opacity-50">
+                <button onClick={() => setModal(true)} disabled={availableBalance <= 0} className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-800 text-white rounded-xl font-bold hover:bg-emerald-900 disabled:opacity-50">
                     <Wallet size={18} />{t.withdraw || 'Request Payout'}
                 </button>
             </div>
@@ -1044,9 +1048,9 @@ const Finance = ({ t, hotel }) => {
                 <div className="space-y-4">
                     <div className="bg-emerald-50 p-4 rounded-xl text-center">
                         <div className="text-sm text-emerald-600">{t.netProfit || 'Available Balance'}</div>
-                        <div className="text-3xl font-bold text-emerald-800">{wallet.balance.toLocaleString()} {t.currency || 'DZD'}</div>
+                        <div className="text-3xl font-bold text-emerald-800">{availableBalance.toLocaleString()} {t.currency || 'DZD'}</div>
                     </div>
-                    <input type="number" max={wallet.balance} value={amount} onChange={e => setAmount(e.target.value)} placeholder={t.amount || 'Amount'} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" />
+                    <input type="number" max={availableBalance} value={amount} onChange={e => setAmount(e.target.value)} placeholder={t.amount || 'Amount'} className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50" />
                     <button onClick={handleWithdraw} disabled={loading} className="w-full py-3 bg-emerald-800 text-white rounded-xl font-bold hover:bg-emerald-900">{loading ? t.loading || 'Loading...' : t.confirm || 'Confirm'}</button>
                 </div>
             </Modal>
@@ -1326,7 +1330,7 @@ export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
     const completeBooking = async (bookingId) => {
         const { data, error } = await supabase
             .from("bookings")
-            .update({ status: "paid" })
+            .update({ status: "completed" })
             .eq("id", bookingId)
             .select();
 
@@ -1389,7 +1393,7 @@ export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
             case 'rooms': return <RoomsSection t={t} lang={lang} onCreateOffer={handleCreateOffer} roomsList={myRooms} onRefresh={loadData} />;
             case 'offers': return <OffersSection t={t} lang={lang} preselectedRoom={offerRoom} offersList={myOffers} roomsList={myRooms} onRefresh={loadData} />;
             // Logic Fix 8: Filter bookings to show ONLY confirmed or paid (Canonical Flow)
-            case 'bookings': return <Bookings t={t} lang={lang} bookings={myBookings.filter(b => b.status === 'confirmed' || b.status === 'paid')} onStatusUpdate={completeBooking} exchangeRate={exchangeRate} />;
+            case 'bookings': return <Bookings t={t} lang={lang} bookings={myBookings.filter(b => b.status === 'confirmed' || b.status === 'paid' || b.status === 'completed')} onStatusUpdate={completeBooking} exchangeRate={exchangeRate} />;
             case 'finance': return <Finance t={t} hotel={hotel} />;
             case 'profile': return <Profile t={t} lang={lang} hotel={hotel} onSave={() => { }} />;
             default: return <Overview t={t} lang={lang} stats={stats} hotel={hotel} />;

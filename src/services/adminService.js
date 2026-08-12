@@ -238,12 +238,33 @@ export const adminService = {
 
     // Get finance summary
     getFinanceSummary: async () => {
-        // Platform balance = total payments - total payouts paid
-        const { data: payments } = await supabase
-            .from('payments')
-            .select('amount')
-            .eq('status', 'paid');
-        const totalPayments = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+        const { data: bookings } = await supabase
+            .from('bookings')
+            .select(`
+                total_price, deposit_amount, status,
+                offer:offers(room:rooms(hotel_id))
+            `)
+            .in('status', ['confirmed', 'paid']);
+
+        const { data: hotelsData } = await supabase
+            .from('hotels')
+            .select('id, commission_percent');
+
+        const rateMap = {};
+        hotelsData?.forEach(h => { rateMap[h.id] = Number(h.commission_percent || 10) / 100; });
+
+        let totalDeposits = 0;
+        let totalCommission = 0;
+
+        bookings?.forEach(b => {
+            const tp = Number(b.total_price || 0);
+            const dep = Number(b.deposit_amount || 0);
+            const hid = b.offer?.room?.hotel_id;
+            const rate = rateMap[hid] ?? 0.10;
+            
+            totalDeposits += dep;
+            totalCommission += tp * rate;
+        });
 
         const { data: payouts } = await supabase
             .from('payout_requests')
@@ -251,16 +272,14 @@ export const adminService = {
 
         const paidPayouts = payouts?.filter(p => p.status === 'paid')
             .reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+            
         const pendingPayouts = payouts?.filter(p => p.status === 'pending' || p.status === 'processing')
             .reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
-        // Calculate commission (assuming average 10%)
-        const commission = Math.round(totalPayments * 0.1);
-
         return {
-            platformBalance: totalPayments - paidPayouts,
+            platformBalance: totalDeposits - paidPayouts,
             hotelDues: pendingPayouts,
-            totalCommission: commission
+            totalCommission: totalCommission
         };
     },
 

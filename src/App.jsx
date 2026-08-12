@@ -37,7 +37,7 @@ import VoucherTemplate from './components/VoucherTemplate';
 import CustomPageViewer from './components/CustomPageViewer';
 import HotelMapViewer from './components/HotelMapViewer';
 import { DataProvider } from './context/DataContext';
-import NetworkDebugger from './components/NetworkDebugger';
+
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/react-query';
 import { useDebounce } from './hooks/useDebounce';
@@ -1714,7 +1714,7 @@ const AdvancedSearch = ({ filters, setFilters, lang, onSearch, onSaveSearch, set
                 {suggestions.map(h => (
                   <div key={h.id} onClick={() => { setSearchTerm(h.name); setFilters({ ...filters, hotelName: h.name }); setShowSuggestions(false); }} className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm font-medium text-gray-700 flex justify-between">
                     <span>{h.name}</span>
-                    <span className="text-xs text-gray-400">{h.city === 'Makkah' ? t('makkah') : t('madinah')}</span>
+                    <span className="text-xs text-gray-400">{h.city?.toLowerCase() === 'makkah' || h.city === 'مكة' ? t('makkah') : h.city?.toLowerCase() === 'madinah' || h.city === 'المدينة' ? t('madinah') : h.city}</span>
                   </div>
                 ))}
               </div>
@@ -2978,7 +2978,7 @@ export default function TalbiaApp() {
         <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onLogin={handleLogin} lang={lang} setLang={setLang} />
         <ChatModal isOpen={!!chatUser} user={chatUser} currentUser={user} onClose={() => setChatUser(null)} lang={lang} isUserOnline={isUserOnline} offerId={chatUser?.offer_id || selectedHotel?.offerId || selectedHotel?.id} />
         <WhatsAppModal isOpen={isWhatsappOpen} onClose={() => setIsWhatsappOpen(false)} lang={lang} />
-        <NetworkDebugger />
+
       </div>
     </DataProvider>
   );

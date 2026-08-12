@@ -167,6 +167,7 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
                                             const remaining = booking.remaining_amount ?? (totalPrice - (booking.deposit_amount || 0));
                                             effStatus = remaining > 0 ? 'confirmed' : 'paid';
                                         }
+                                        if (booking.status === 'completed') effStatus = 'completed';
                                         return (
                                             <>
                                                 {effStatus === 'confirmed' && (
@@ -195,7 +196,7 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
                                                         <Download size={14} /> {lang === 'ar' ? 'وصل العربون' : 'Deposit Receipt'}
                                                     </button>
                                                 )}
-                                                {effStatus === 'paid' && (
+                                                {(effStatus === 'paid' || effStatus === 'completed') && (
                                                     <button className="px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-lg flex items-center gap-1"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -218,7 +219,7 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
                                                             if (showToast) showToast(lang === 'ar' ? 'جاري تحميل الوصل...' : 'Downloading Receipt...');
                                                         }}
                                                     >
-                                                        <Download size={14} /> {lang === 'ar' ? 'تحميل الوصل' : 'Receipt'}
+                                                        <Download size={14} /> {lang === 'ar' ? (effStatus === 'completed' ? 'وصل الحجز النهائي' : 'تحميل الوصل') : (effStatus === 'completed' ? 'Final Receipt' : 'Receipt')}
                                                     </button>
                                                 )}
                                             </>
@@ -349,7 +350,7 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
                         )}
 
                         {/* PDF Download Button - Only show if actually paid something */}
-                        {(selectedBooking.status === 'paid' || selectedBooking.status === 'confirmed') && (
+                        {(selectedBooking.status === 'paid' || selectedBooking.status === 'confirmed' || selectedBooking.status === 'completed') && (
                             <button
                                 onClick={() => {
                                     const data = {

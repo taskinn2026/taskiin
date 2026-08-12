@@ -13,7 +13,7 @@ import { supabase } from './lib/supabase';
 import { toast } from 'react-hot-toast';
 import HotelFinancials from './components/HotelFinancials';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // ========== ACTION REQUIRED: ERROR BOUNDARY ==========
 class ErrorBoundary extends React.Component {
@@ -1011,7 +1011,7 @@ const Finance = ({ t, hotel, myBookings }) => {
                                     Number(r.net_balance).toLocaleString() + ' DZD'
                                 ]);
 
-                                doc.autoTable({
+                                autoTable(doc, {
                                     startY: 30,
                                     head: [['Period', 'Bookings', 'Total Deposits', 'Total Commission', 'Net Balance']],
                                     body: tableData,

@@ -12,6 +12,8 @@ import { commonService } from './services/commonService';
 import { supabase } from './lib/supabase';
 import { toast } from 'react-hot-toast';
 import HotelFinancials from './components/HotelFinancials';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 // ========== ACTION REQUIRED: ERROR BOUNDARY ==========
 class ErrorBoundary extends React.Component {
@@ -992,16 +994,36 @@ const Finance = ({ t, hotel, myBookings }) => {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold text-gray-900">{t.ar ? 'التقارير المالية (التسوية)' : 'Monthly Reconciliations'}</h3>
                     <button
-                        onClick={async () => {
+                        onClick={() => {
                             try {
-                                const { data, error } = await supabase.functions.invoke('generate-reconciliation-pdf', {
-                                    body: { hotel_id: hotel.id }
+                                const doc = new jsPDF();
+                                
+                                // Default font for jsPDF doesn't support Arabic well natively without custom VFS.
+                                // We'll try to generate a basic report and rely on English numbers and basic structure.
+                                doc.setFontSize(18);
+                                doc.text("Financial Reconciliation Report", 105, 20, null, null, "center");
+                                
+                                const tableData = reconciliations.map(r => [
+                                    r.period_start + ' to ' + r.period_end,
+                                    r.total_bookings,
+                                    Number(r.total_deposits).toLocaleString() + ' DZD',
+                                    Number(r.total_commission).toLocaleString() + ' DZD',
+                                    Number(r.net_balance).toLocaleString() + ' DZD'
+                                ]);
+
+                                doc.autoTable({
+                                    startY: 30,
+                                    head: [['Period', 'Bookings', 'Total Deposits', 'Total Commission', 'Net Balance']],
+                                    body: tableData,
+                                    styles: { halign: 'center' },
+                                    headStyles: { fillColor: [4, 120, 87] } // emerald-800
                                 });
-                                if (error) throw error;
-                                if (data?.url) window.open(data.url, '_blank');
-                                else toast.success(t.ar ? 'تم إرسال التقرير' : 'Report generated');
+                                
+                                doc.save('reconciliation_report.pdf');
+                                toast.success(t.ar ? 'تم إنشاء التقرير' : 'Report generated');
                             } catch (e) {
-                                toast.error('PDF Generation Edge Function not yet deployed');
+                                console.error(e);
+                                toast.error('Error generating PDF on client side');
                             }
                         }}
                         className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200"

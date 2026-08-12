@@ -20,7 +20,7 @@ const ADMIN_T = {
         payoutRequests: 'طلبات سحب', activeHotels: 'فنادق نشطة', alerts: 'تنبيهات ذكية',
         allOffers: 'جميع العروض', pending: 'قيد المراجعة', approved: 'مقبول', rejected: 'مرفوض',
         approve: 'قبول', reject: 'رفض', edit: 'تعديل', delete: 'حذف', view: 'عرض',
-        hotel: 'الفندق', room: 'الغرفة', price: 'السعر', status: 'الحالة', date: 'التاريخ', depositPaid: 'عربون مدفوع', deposit: 'العربون',
+        hotel: 'الفندق', room: 'الغرفة', price: 'السعر', status: 'الحالة', date: 'التاريخ', depositPaid: 'عربون مدفوع', deposit: 'العربون', fullyPaid: 'تم الدفع كلياً',
         actions: 'إجراءات', bookings: 'الحجوزات', guest: 'المعتمر', amount: 'المبلغ',
         verified_gold: 'ذهبي', verified_blue: 'أزرق', unverified: 'غير موثق',
         offersCount: 'العروض', bookingsCount: 'الحجوزات', commission: 'العمولة', docs: 'المستندات',
@@ -41,7 +41,7 @@ const ADMIN_T = {
         payoutRequests: 'Payout Requests', activeHotels: 'Active Hotels', alerts: 'Smart Alerts',
         allOffers: 'All Offers', pending: 'Pending', approved: 'Approved', rejected: 'Rejected',
         approve: 'Approve', reject: 'Reject', edit: 'Edit', delete: 'Delete', view: 'View',
-        hotel: 'Hotel', room: 'Room', price: 'Price', status: 'Status', date: 'Date', depositPaid: 'Deposit Paid', deposit: 'Deposit',
+        hotel: 'Hotel', room: 'Room', price: 'Price', status: 'Status', date: 'Date', depositPaid: 'Deposit Paid', deposit: 'Deposit', fullyPaid: 'Fully Paid',
         actions: 'Actions', bookings: 'Bookings', guest: 'Guest', amount: 'Amount',
         verified_gold: 'Gold', verified_blue: 'Blue', unverified: 'Unverified',
         offersCount: 'Offers', bookingsCount: 'Bookings', commission: 'Commission', docs: 'Docs',
@@ -136,8 +136,8 @@ const StatusBadge = ({ status, t }) => {
         scheduled: 'bg-purple-50 text-purple-700', gold: 'bg-amber-50 text-amber-700', blue: 'bg-blue-50 text-blue-700', none: 'bg-gray-100 text-gray-600'
     };
     const labels = {
-        pending: t.pending, approved: t.approved, rejected: t.rejected, confirmed: t.approved,
-        completed: t.paid, processing: t.processing, paid: t.paid, active: t.active, suspended: t.suspended,
+        pending: t.pending, approved: t.approved, rejected: t.rejected, confirmed: t.depositPaid,
+        completed: t.fullyPaid, processing: t.processing, paid: t.paid, active: t.active, suspended: t.suspended,
         scheduled: t.scheduled, gold: t.verified_gold, blue: t.verified_blue, none: t.unverified
     };
     return <span className={`px-2 py-1 rounded-full text-xs font-bold ${styles[status] || styles.pending}`}>{labels[status] || status}</span>;
@@ -661,9 +661,33 @@ const FinanceSection = ({ t, lang }) => {
                                 <div className="font-medium text-gray-900">{p.hotel}</div>
                                 <div className="text-xs text-gray-500">{p.id} • {p.date}</div>
                             </div>
-                            <div className="text-end">
-                                <div className="font-bold text-gray-900">{p.amount.toLocaleString()} {t.currency}</div>
-                                <StatusBadge status={p.status} t={t} />
+                            <div className="text-end flex items-center gap-3">
+                                <div className="text-end">
+                                    <div className="font-bold text-gray-900">{p.amount.toLocaleString()} {t.currency}</div>
+                                    <StatusBadge status={p.status} t={t} />
+                                </div>
+                                {(p.status === 'processing' || p.status === 'pending') && (
+                                    <button
+                                        onClick={async () => {
+                                            if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من إتمام التحويل وتصفير المبلغ؟' : 'Confirm transfer?')) {
+                                                try {
+                                                    await adminService.updatePayoutStatus(p.fullId, 'paid');
+                                                    toast.success(lang === 'ar' ? 'تم تأكيد التحويل بنجاح' : 'Transfer confirmed');
+                                                    const newPayouts = await adminService.getPayouts();
+                                                    setPayouts(newPayouts);
+                                                    const summaryData = await adminService.getFinanceSummary();
+                                                    setSummary(summaryData);
+                                                } catch (e) {
+                                                    toast.error('Error confirming transfer');
+                                                }
+                                            }
+                                        }}
+                                        className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                                        title={lang === 'ar' ? 'تأكيد التحويل' : 'Confirm Transfer'}
+                                    >
+                                        <Check size={18} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )) : (

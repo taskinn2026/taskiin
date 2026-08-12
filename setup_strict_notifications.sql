@@ -12,7 +12,8 @@ DECLARE
     v_partner_id UUID;
     v_admin RECORD;
     v_is_new_pending BOOLEAN := FALSE;
-    v_is_new_paid BOOLEAN := FALSE;
+    v_is_new_confirmed BOOLEAN := FALSE;
+    v_is_new_completed BOOLEAN := FALSE;
 BEGIN
     -- Resolve Partner ID from Booking
     SELECT h.owner_id INTO v_partner_id
@@ -25,17 +26,19 @@ BEGIN
     -- Determine State Changes
     IF TG_OP = 'INSERT' THEN
         IF NEW.status = 'pending' THEN v_is_new_pending := TRUE; END IF;
-        IF NEW.status = 'paid' THEN v_is_new_paid := TRUE; END IF;
+        IF NEW.status = 'confirmed' OR NEW.status = 'paid' THEN v_is_new_confirmed := TRUE; END IF;
+        IF NEW.status = 'completed' THEN v_is_new_completed := TRUE; END IF;
     ELSIF TG_OP = 'UPDATE' THEN
         IF NEW.status = 'pending' AND OLD.status IS DISTINCT FROM 'pending' THEN v_is_new_pending := TRUE; END IF;
-        IF NEW.status = 'paid' AND OLD.status IS DISTINCT FROM 'paid' THEN v_is_new_paid := TRUE; END IF;
+        IF (NEW.status = 'confirmed' OR NEW.status = 'paid') AND (OLD.status IS DISTINCT FROM 'confirmed' AND OLD.status IS DISTINCT FROM 'paid') THEN v_is_new_confirmed := TRUE; END IF;
+        IF NEW.status = 'completed' AND OLD.status IS DISTINCT FROM 'completed' THEN v_is_new_completed := TRUE; END IF;
     END IF;
 
     -- ==========================================
     -- EVENT: حجز جديد (New Booking / Pending)
     -- ==========================================
     IF v_is_new_pending THEN
-        -- Notify Hotel Owner (حجز جديد) -> Unspecified in prompt but maintaining for completion
+        -- Notify Hotel Owner (حجز جديد)
         IF v_partner_id IS NOT NULL THEN
             INSERT INTO notifications (receiver_id, receiver_role, type, title, body, booking_id, data, is_read, created_at)
             VALUES (v_partner_id, 'partner', 'booking', 'حجز جديد', 'قام معتمر بحجز غرفة في عرضك', NEW.id, '{}'::jsonb, false, now());
@@ -43,23 +46,38 @@ BEGIN
     END IF;
 
     -- ==========================================
-    -- EVENT: إتمام الحجز (Booking Completed / Paid)
+    -- EVENT: تم الدفع (Deposit Paid / Confirmed)
     -- ==========================================
-    IF v_is_new_paid THEN
-        -- Notify Pilgrim (تم إتمام الحجز)
+    IF v_is_new_confirmed THEN
+        -- Notify Pilgrim
+        INSERT INTO notifications (receiver_id, receiver_role, type, title, body, booking_id, data, is_read, created_at)
+        VALUES (NEW.user_id, 'pilgrim', 'booking', 'تم دفع العربون', 'تم استلام عربون الحجز الخاص بك بنجاح', NEW.id, '{}'::jsonb, false, now());
+
+        -- Notify Hotel Owner
+        IF v_partner_id IS NOT NULL THEN
+            INSERT INTO notifications (receiver_id, receiver_role, type, title, body, booking_id, data, is_read, created_at)
+            VALUES (v_partner_id, 'partner', 'booking', 'تم دفع العربون', 'تم استلام العربون لحجز جديد', NEW.id, '{}'::jsonb, false, now());
+        END IF;
+    END IF;
+
+    -- ==========================================
+    -- EVENT: إتمام الحجز (Booking Completed)
+    -- ==========================================
+    IF v_is_new_completed THEN
+        -- Notify Pilgrim
         INSERT INTO notifications (receiver_id, receiver_role, type, title, body, booking_id, data, is_read, created_at)
         VALUES (NEW.user_id, 'pilgrim', 'booking', 'تم إتمام الحجز', 'تم استلام المبلغ المتبقي وتسليم الغرفة لك', NEW.id, '{}'::jsonb, false, now());
 
-        -- Notify Admins (حجز مكتمل)
+        -- Notify Admins
         FOR v_admin IN SELECT id FROM profiles WHERE role = 'admin' LOOP
             INSERT INTO notifications (receiver_id, receiver_role, type, title, body, booking_id, data, is_read, created_at)
             VALUES (v_admin.id, 'admin', 'admin', 'تم إتمام حجز', 'الفندق أكمل الحجز رقم ' || LEFT(CAST(NEW.id AS TEXT), 8), NEW.id, '{}'::jsonb, false, now());
         END LOOP;
 
-        -- Notify Hotel Owner (تم إتمام الحجز)
+        -- Notify Hotel Owner
         IF v_partner_id IS NOT NULL THEN
             INSERT INTO notifications (receiver_id, receiver_role, type, title, body, booking_id, data, is_read, created_at)
-            VALUES (v_partner_id, 'partner', 'booking', 'تم إتمام الحجز النصف باق', 'تم استلام المبلغ المتبقي، حجز مكتمل', NEW.id, '{}'::jsonb, false, now());
+            VALUES (v_partner_id, 'partner', 'booking', 'تم إتمام الحجز', 'تم استلام المبلغ المتبقي، حجز مكتمل', NEW.id, '{}'::jsonb, false, now());
         END IF;
     END IF;
 

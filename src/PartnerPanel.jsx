@@ -908,7 +908,7 @@ const Bookings = ({ t, bookings, onStatusUpdate, lang, exchangeRate = 35.80 }) =
     </div>
 );
 
-const Finance = ({ t, hotel }) => {
+const Finance = ({ t, hotel, myBookings }) => {
     const [modal, setModal] = useState(false);
     const [payouts, setPayouts] = useState([]);
     const [amount, setAmount] = useState('');
@@ -1400,7 +1400,7 @@ export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
             case 'offers': return <OffersSection t={t} lang={lang} preselectedRoom={offerRoom} offersList={myOffers} roomsList={myRooms} onRefresh={loadData} />;
             // Logic Fix 8: Filter bookings to show ONLY confirmed or paid (Canonical Flow)
             case 'bookings': return <Bookings t={t} lang={lang} bookings={myBookings.filter(b => b.status === 'confirmed' || b.status === 'paid' || b.status === 'completed')} onStatusUpdate={completeBooking} exchangeRate={exchangeRate} />;
-            case 'finance': return <Finance t={t} hotel={hotel} />;
+            case 'finance': return <Finance t={t} hotel={hotel} myBookings={myBookings} />;
             case 'profile': return <Profile t={t} lang={lang} hotel={hotel} onSave={() => { }} />;
             default: return <Overview t={t} lang={lang} stats={stats} hotel={hotel} />;
         }

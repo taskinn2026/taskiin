@@ -933,9 +933,19 @@ const Finance = ({ t, hotel, myBookings }) => {
         load();
     }, [hotel]);
 
+    // Calculate Live Available Balance
+    const commissionRate = hotel?.commission_percent || 10;
+    const rate = commissionRate / 100;
+    const totalDeposits = (myBookings || [])
+        .filter(b => b.status === 'confirmed' || b.status === 'paid' || b.status === 'completed')
+        .reduce((sum, b) => sum + Number(b.deposit_amount || 0), 0);
+    const liveHotelBalance = totalDeposits * (1 - rate);
+    const totalPayouts = payouts.reduce((sum, p) => sum + Number(p.amount), 0);
+    const availableBalance = Math.max(0, liveHotelBalance - totalPayouts);
+
     const handleWithdraw = async () => {
         if (!amount || isNaN(amount) || amount <= 0) return;
-        if (amount > wallet.balance) {
+        if (amount > availableBalance) {
             toast.error(t.ar ? 'الرصيد غير كاف' : 'Insufficient balance');
             return;
         }
@@ -955,16 +965,6 @@ const Finance = ({ t, hotel, myBookings }) => {
     };
 
     if (loading) return <div>{t.loading || 'Loading...'}</div>;
-
-    // Calculate Live Available Balance
-    const commissionRate = hotel?.commission_percent || 10;
-    const rate = commissionRate / 100;
-    const totalDeposits = myBookings
-        .filter(b => b.status === 'confirmed' || b.status === 'paid' || b.status === 'completed')
-        .reduce((sum, b) => sum + Number(b.deposit_amount || 0), 0);
-    const liveHotelBalance = totalDeposits * (1 - rate);
-    const totalPayouts = payouts.reduce((sum, p) => sum + Number(p.amount), 0);
-    const availableBalance = Math.max(0, liveHotelBalance - totalPayouts);
 
     return (
         <div className="space-y-6">

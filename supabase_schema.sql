@@ -562,3 +562,4 @@ select cron.schedule(
   '0 3 * * 0',
   $$ select cleanup_old_notifications(); $$
 );
+

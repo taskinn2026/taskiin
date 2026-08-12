@@ -813,6 +813,13 @@ const Overview = ({ t, lang, stats, alerts, recentBookings, hotel, onDeleteAlert
     </div>
 );
 
+const Bookings = ({ t, bookings, onStatusUpdate, lang, exchangeRate = 35.80 }) => (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+            <table className="w-full">
+                <thead className="bg-gray-50 text-xs font-bold text-gray-500 uppercase">
+                    <tr>
+                        <th className="px-4 py-3 text-start">ID</th>
                         <th className="px-4 py-3 text-start">{t.guestName}</th>
                         <th className="px-4 py-3 text-start">{lang === 'ar' ? 'العرض المرتبط' : 'Linked Offer'}</th>
                         <th className="px-4 py-3 text-center">{lang === 'ar' ? 'النوع' : 'Type'}</th>
@@ -899,8 +906,7 @@ const Overview = ({ t, lang, stats, alerts, recentBookings, hotel, onDeleteAlert
             </table>
         </div>
     </div>
-    );
-};
+);
 
 const Finance = ({ t, hotel }) => {
     const [modal, setModal] = useState(false);

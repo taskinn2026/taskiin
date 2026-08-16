@@ -9,6 +9,7 @@ import { generateBookingPdf } from '../services/pdfService';
 import VoucherTemplate from './VoucherTemplate';
 import { supabase } from '../lib/supabase';
 import { bookingService } from '../services/bookingService';
+import { commonService } from '../services/commonService';
 
 // Status Badge Component (reused locally or imported if shared)
 const StatusBadge = ({ status, deposit_paid, t, lang, booking }) => {
@@ -243,6 +244,12 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
 
                                                         if (!booking?.id) throw new Error('Booking ID is missing');
                                                         if (!user?.id) throw new Error('User ID is missing'); // Optional: Allow paying without user ID? No, logic requires it.
+
+                                                        const customChargilyLink = await commonService.getAppSettings('chargily_link');
+                                                        if (customChargilyLink && customChargilyLink.trim() !== '') {
+                                                            window.location.href = customChargilyLink;
+                                                            return;
+                                                        }
 
                                                         const session = await bookingService.createCheckoutSession(
                                                             booking.id,

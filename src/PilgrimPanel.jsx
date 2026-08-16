@@ -10,7 +10,6 @@ import { pilgrimService } from './services/pilgrimService';
 import { bookingService } from './services/bookingService';
 import { commonService } from './services/commonService';
 import { generateBookingPdf } from './services/pdfService';
-import ChatModal from './components/ChatModal';
 import VoucherTemplate from './components/VoucherTemplate';
 import { Footer } from './components/Footer';
 import { supabase } from './lib/supabase';

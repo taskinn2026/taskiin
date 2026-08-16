@@ -246,9 +246,16 @@ const BookingsPage = ({ t, lang, onOpenChat, showToast }) => {
                                                         if (!user?.id) throw new Error('User ID is missing'); // Optional: Allow paying without user ID? No, logic requires it.
 
                                                         const customChargilyLink = await commonService.getAppSettings('chargily_link');
+                                                        console.log('[Payment Debug] Fetched customChargilyLink from DB:', customChargilyLink);
                                                         if (customChargilyLink && customChargilyLink.trim() !== '') {
-                                                            window.location.href = customChargilyLink;
-                                                            return;
+                                                            if (customChargilyLink.trim().startsWith('http')) {
+                                                                console.log('[Payment Debug] Redirecting to Custom Chargily Link:', customChargilyLink);
+                                                                window.location.href = customChargilyLink.trim();
+                                                                return;
+                                                            } else {
+                                                                console.warn('[Payment Debug] The saved link is not a valid URL. Value:', customChargilyLink);
+                                                                if (showToast) showToast(lang === 'ar' ? 'الرابط المباشر غير صالح، يبدو أنك أدخلت مفتاحاً (Key) وليس رابطاً (URL).' : 'Invalid direct link format.');
+                                                            }
                                                         }
 
                                                         const session = await bookingService.createCheckoutSession(

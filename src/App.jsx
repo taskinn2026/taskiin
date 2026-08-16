@@ -1182,10 +1182,16 @@ const CheckoutFlow = ({ hotel, type, onClose, lang, dates, user, onBooked }) => 
       if (deposit > 0) {
         try {
           const customChargilyLink = await commonService.getAppSettings('chargily_link');
+          console.log('[Payment Debug] Fetched customChargilyLink from DB:', customChargilyLink);
           if (customChargilyLink && customChargilyLink.trim() !== '') {
-             console.log('Redirecting to Custom Chargily Link:', customChargilyLink);
-             window.location.href = customChargilyLink;
-             return;
+             if (customChargilyLink.trim().startsWith('http')) {
+                 console.log('[Payment Debug] Redirecting to Custom Chargily Link:', customChargilyLink);
+                 window.location.href = customChargilyLink.trim();
+                 return;
+             } else {
+                 console.warn('[Payment Debug] The saved link is not a valid URL (missing http/https). Value:', customChargilyLink);
+                 toast.error(lang === 'ar' ? 'الرابط المباشر غير صالح، يبدو أنك أدخلت مفتاحاً (Key) وليس رابطاً (URL).' : 'Invalid direct link format.');
+             }
           }
 
           // Fix: Use createCheckoutSession instead of direct createPayment to trigger Chargily Flow

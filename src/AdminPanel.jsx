@@ -711,6 +711,7 @@ const MarketingSection = ({ t, lang }) => {
     const [seasonBannerModal, setSeasonBannerModal] = useState({ open: false, banner: null }); // New modal state
     const [footerLinks, setFooterLinks] = useState([]);
     const [chargilyLink, setChargilyLink] = useState('');
+    const [chargilyLiveMode, setChargilyLiveMode] = useState(false);
     const [customPages, setCustomPages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploadingBanner, setUploadingBanner] = useState(false);
@@ -791,18 +792,20 @@ const MarketingSection = ({ t, lang }) => {
 
     const fetchBanners = async () => {
         setLoading(true);
-        const [bannersData, seasonBannersData, footerData, pagesData, chargilyData] = await Promise.all([
+        const [bannersData, seasonBannersData, footerData, pagesData, chargilyData, chargilyLiveModeData] = await Promise.all([
             commonService.getAllBanners(),
             commonService.getAdminSeasonBanners().catch(e => { console.error('No season_banners table yet', e); return []; }),
             commonService.getAppSettings('footer_links').catch(e => []),
             commonService.getCustomPages().catch(e => []),
-            commonService.getAppSettings('chargily_link').catch(e => '')
+            commonService.getAppSettings('chargily_link').catch(e => ''),
+            commonService.getAppSettings('chargily_live_mode').catch(e => false)
         ]);
         setBanners(bannersData || []);
         setSeasonBanners(seasonBannersData || []);
         setFooterLinks(footerData || []);
         setCustomPages(pagesData || []);
         setChargilyLink(chargilyData || '');
+        setChargilyLiveMode(chargilyLiveModeData === 'true' || chargilyLiveModeData === true);
         setLoading(false);
     };
 
@@ -913,6 +916,7 @@ const MarketingSection = ({ t, lang }) => {
         try {
             await commonService.updateAppSettings('footer_links', footerLinks);
             await commonService.updateAppSettings('chargily_link', chargilyLink);
+            await commonService.updateAppSettings('chargily_live_mode', chargilyLiveMode);
             toast.success(lang === 'ar' ? 'تم حفظ الإعدادات' : 'Settings saved');
         } catch (e) {
             console.error(e);

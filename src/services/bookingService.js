@@ -287,6 +287,14 @@ export const bookingService = {
             .eq('id', userId)
             .single();
 
+        const { data: modeData } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'chargily_live_mode')
+            .maybeSingle();
+        const isLiveMode = modeData?.value;
+        const chargilyMode = (isLiveMode === 'true' || isLiveMode === true) ? 'live' : 'test';
+
         const payload = {
             bookingId: bookingId,
             amount: amount, 
@@ -296,7 +304,7 @@ export const bookingService = {
             customerName: profile?.full_name || 'Guest User',
             customerEmail: profile?.email || 'guest@taskiin.com',
             customerPhone: profile?.phone || '',
-            mode: mode
+            mode: chargilyMode
         };
 
         // 4. Call Supabase Edge Function

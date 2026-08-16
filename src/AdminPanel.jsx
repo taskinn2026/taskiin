@@ -1055,6 +1055,7 @@ const MarketingSection = ({ t, lang }) => {
                     <button onClick={() => setFooterLinks([...footerLinks, {title: '', url: ''}])} className="text-emerald-600 font-bold text-sm">+ {lang === 'ar' ? 'إضافة رابط' : 'Add Link'}</button>
                 </div>
             </div>
+        </div>
 
             {/* Notifications (Kept Static) */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">

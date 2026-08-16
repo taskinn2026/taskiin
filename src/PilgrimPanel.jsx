@@ -1337,9 +1337,7 @@ export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, p
                     )}
                     {renderSection()}
                 </div>
-                </div>
             </main>
-            
             <div className={`pt-8 pb-20 md:pb-0 ${lang === 'ar' ? 'md:mr-64' : 'md:ml-64'}`}>
                 <Footer lang={lang} onPageClick={(slug) => { window.location.href = '/#page=' + slug; }} />
             </div>

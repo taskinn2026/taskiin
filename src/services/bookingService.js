@@ -295,7 +295,8 @@ export const bookingService = {
             webhookEndpoint: webhookUrl,
             customerName: profile?.full_name || 'Guest User',
             customerEmail: profile?.email || 'guest@taskiin.com',
-            customerPhone: profile?.phone || ''
+            customerPhone: profile?.phone || '',
+            mode: mode
         };
 
         // 4. Call Supabase Edge Function

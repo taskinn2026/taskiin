@@ -10,7 +10,6 @@ import { pilgrimService } from './services/pilgrimService';
 import { bookingService } from './services/bookingService';
 import { commonService } from './services/commonService';
 import { generateBookingPdf } from './services/pdfService';
-import GuestListEditor from './components/GuestListEditor';
 import VoucherTemplate from './components/VoucherTemplate';
 import { Footer } from './components/Footer';
 import CustomPageViewer from './components/CustomPageViewer';

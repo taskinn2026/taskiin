@@ -3,7 +3,7 @@ import { commonService } from '../services/commonService';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Footer } from './Footer';
 
-export default function CustomPageViewer({ slug, onBack, lang }) {
+export default function CustomPageViewer({ slug, onBack, lang, onPageClick }) {
     const [page, setPage] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -54,7 +54,7 @@ export default function CustomPageViewer({ slug, onBack, lang }) {
                     </div>
                 )}
             </main>
-            <Footer lang={lang} onPageClick={(slug) => { window.location.href = '/#page=' + slug; }} />
+            <Footer lang={lang} onPageClick={(slug) => { onPageClick(slug); window.scrollTo(0,0); }} />
         </div>
     );
 }

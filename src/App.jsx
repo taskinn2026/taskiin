@@ -2903,8 +2903,8 @@ export default function TalbiaApp() {
     }
   };
 
-  if (role === 'admin') return <AdminPanel lang={lang} setLang={setLang} setRole={setRole} onLogout={handleGlobalLogout} />;
-  if (role === 'partner' || role === 'hotel') return <PartnerPanel lang={lang} setLang={setLang} setRole={setRole} onLogout={handleGlobalLogout} />;
+  if (role === 'admin') return <AdminPanel lang={lang} setLang={setLang} setRole={setRole} onLogout={handleGlobalLogout} onPageClick={setSelectedPageSlug} />;
+  if (role === 'partner' || role === 'hotel') return <PartnerPanel lang={lang} setLang={setLang} setRole={setRole} onLogout={handleGlobalLogout} onPageClick={setSelectedPageSlug} />;
 
   return (
     <DataProvider>
@@ -2926,6 +2926,7 @@ export default function TalbiaApp() {
             user={user}
             profile={profile}
             isUserOnline={isUserOnline}
+            onPageClick={setSelectedPageSlug}
             initialTab={initialPilgrimTab}
             onClose={() => {
               setIsProfileOpen(false);
@@ -2946,7 +2947,7 @@ export default function TalbiaApp() {
             showToast={showToast}
           />
         ) : selectedPageSlug ? (
-          <CustomPageViewer slug={selectedPageSlug} onBack={() => setSelectedPageSlug(null)} lang={lang} />
+          <CustomPageViewer slug={selectedPageSlug} onBack={() => setSelectedPageSlug(null)} lang={lang} onPageClick={setSelectedPageSlug} />
         ) : voucher ? (
           <BookingVoucherPage booking={voucher} onBack={() => { setVoucher(null); setSelectedHotel(null); }} lang={lang} />
         ) : selectedHotel ? (

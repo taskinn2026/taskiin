@@ -1227,7 +1227,7 @@ const HotelSetupWizard = ({ t, lang, onSave, loading }) => {
 };
 
 // ========== MAIN COMPONENT ==========
-export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
+export default function PartnerPanel({ lang, setLang, setRole, onLogout, onPageClick }) {
     const [active, setActive] = useState(window.location.hash.replace('#', '') || 'overview');
 
     useEffect(() => {
@@ -1500,7 +1500,7 @@ export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
                             <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-800 font-bold hidden md:flex">H</div>
                         </div>
                     </header>
-                    <main className="p-4 md:p-6">
+                    <main className="p-4 md:p-6 flex-1 w-full">
                         {seasonBanner && (
                             <div className="mb-6 rounded-2xl overflow-hidden relative shadow-md hover:shadow-lg transition-shadow">
                                 <div className="min-h-[8rem] md:min-h-[10rem] bg-gradient-to-br from-emerald-900 via-emerald-700 to-emerald-500 flex flex-col items-center justify-center px-8 py-6 relative overflow-hidden text-center">
@@ -1524,7 +1524,7 @@ export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
                         )}
                         {render()}
                     </main>
-                    <Footer lang={lang} onPageClick={(slug) => { window.location.href = '/#page=' + slug; }} />
+                    <Footer lang={lang} onPageClick={(slug) => { onPageClick(slug); window.scrollTo(0,0); }} />
                 </div>
             </div >
         </ErrorBoundary >

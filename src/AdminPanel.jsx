@@ -1363,7 +1363,7 @@ const InsightsSection = ({ t, lang }) => {
 };
 
 // Main Admin Panel
-export default function AdminPanel({ lang, setLang, setRole, onLogout }) {
+export default function AdminPanel({ lang, setLang, setRole, onLogout, onPageClick }) {
     const [activeSection, setActiveSection] = useState(window.location.hash.replace('#', '') || 'dashboard');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -1410,8 +1410,8 @@ export default function AdminPanel({ lang, setLang, setRole, onLogout }) {
                         <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-800 font-bold">A</div>
                     </div>
                 </header>
-                <main className="p-6 min-h-[calc(100vh-160px)]">{renderSection()}</main>
-                <Footer lang={lang} onPageClick={(slug) => { window.location.href = '/#page=' + slug; }} />
+                <main className="p-6 flex-1 w-full">{renderSection()}</main>
+                <Footer lang={lang} onPageClick={(slug) => { onPageClick(slug); window.scrollTo(0,0); }} />
             </div>
         </div>
     );

@@ -948,7 +948,7 @@ const NotificationBell = ({ user, lang, onNavigate }) => {
 };
 
 // Main Pilgrim Panel
-export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, profile, onClose, onSelectHotel, initialTab = 'bookings', isUserOnline, showToast }) {
+export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, profile, onClose, onSelectHotel, initialTab = 'bookings', isUserOnline, showToast, onPageClick }) {
     const { loading } = useData(); // Consume global data
     // roommates, favorites, payments Removed from global context to lazy load
     const [activeSection, setActiveSection] = useState(window.location.hash.replace('#', '') || initialTab);
@@ -1163,7 +1163,7 @@ export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, p
 
 
     return (
-        <div className="min-h-screen bg-stone-50 font-[Tajawal]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="min-h-screen bg-stone-50 font-[Tajawal] flex flex-col" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
             <style>{`
         @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .animate-slide-up { animation: slide-up 0.3s ease-out; }
@@ -1309,7 +1309,7 @@ export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, p
                 </div>
             </aside>
 
-            <main className={`pt-16 pb-20 md:pb-6 px-4 ${lang === 'ar' ? 'md:mr-64' : 'md:ml-64'}`}>
+            <main className={`pt-16 pb-20 md:pb-6 px-4 flex-1 w-full ${lang === 'ar' ? 'md:mr-64' : 'md:ml-64'}`}>
                 <div className="max-w-2xl mx-auto">
                     {seasonBanner && (
                         <div className="mb-6 rounded-2xl overflow-hidden relative shadow-md hover:shadow-lg transition-shadow">
@@ -1338,7 +1338,7 @@ export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, p
                 </div>
             </main>
             <div className={`pt-8 pb-20 md:pb-0 ${lang === 'ar' ? 'md:mr-64' : 'md:ml-64'}`}>
-                <Footer lang={lang} onPageClick={(slug) => { window.location.href = '/#page=' + slug; }} />
+                <Footer lang={lang} onPageClick={(slug) => { onPageClick(slug); window.scrollTo(0,0); }} />
             </div>
 
             <BottomNav activeSection={activeSection} setActiveSection={setActiveSection} t={t} />

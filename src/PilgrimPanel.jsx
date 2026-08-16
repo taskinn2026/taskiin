@@ -10,7 +10,9 @@ import { pilgrimService } from './services/pilgrimService';
 import { bookingService } from './services/bookingService';
 import { commonService } from './services/commonService';
 import { generateBookingPdf } from './services/pdfService';
+import ChatModal from './components/ChatModal';
 import VoucherTemplate from './components/VoucherTemplate';
+import { Footer } from './components/Footer';
 import { supabase } from './lib/supabase';
 import { toast } from 'react-hot-toast';
 import BookingsPage from './components/BookingsPage';
@@ -1335,7 +1337,12 @@ export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, p
                     )}
                     {renderSection()}
                 </div>
+                </div>
             </main>
+            
+            <div className={`pt-8 pb-20 md:pb-0 ${lang === 'ar' ? 'md:mr-64' : 'md:ml-64'}`}>
+                <Footer lang={lang} onPageClick={(slug) => { window.location.href = '/#page=' + slug; }} />
+            </div>
 
             <BottomNav activeSection={activeSection} setActiveSection={setActiveSection} t={t} />
             <ChatModal isOpen={!!chatUser} onClose={() => setChatUser(null)} user={chatUser} t={t} lang={lang} isUserOnline={isUserOnline} offerId={chatUser?.offer_id} />

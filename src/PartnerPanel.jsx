@@ -14,6 +14,7 @@ import { toast } from 'react-hot-toast';
 import HotelFinancials from './components/HotelFinancials';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Footer } from './components/Footer';
 
 // ========== ACTION REQUIRED: ERROR BOUNDARY ==========
 class ErrorBoundary extends React.Component {
@@ -1523,6 +1524,7 @@ export default function PartnerPanel({ lang, setLang, setRole, onLogout }) {
                         )}
                         {render()}
                     </main>
+                    <Footer lang={lang} onPageClick={(slug) => { window.location.href = '/#page=' + slug; }} />
                 </div>
             </div >
         </ErrorBoundary >

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { commonService } from '../services/commonService';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { Footer } from './Footer';
 
 export default function CustomPageViewer({ slug, onBack, lang }) {
     const [page, setPage] = useState(null);
@@ -22,7 +23,7 @@ export default function CustomPageViewer({ slug, onBack, lang }) {
     }, [slug]);
 
     return (
-        <div className="min-h-screen bg-stone-50" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="min-h-screen bg-stone-50 flex flex-col" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
             <header className="bg-white border-b border-gray-100 px-4 md:px-6 py-4 flex items-center sticky top-0 z-30 shadow-sm">
                 <button onClick={onBack} className="p-2 -mx-2 hover:bg-gray-100 rounded-xl text-gray-700 mr-2 rtl:ml-2 rtl:mr-0 transition-colors">
                     {lang === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
@@ -32,7 +33,7 @@ export default function CustomPageViewer({ slug, onBack, lang }) {
                 </h1>
             </header>
 
-            <main className="max-w-4xl mx-auto px-4 py-8">
+            <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
                 {loading ? (
                     <div className="flex justify-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-800"></div>
@@ -53,6 +54,7 @@ export default function CustomPageViewer({ slug, onBack, lang }) {
                     </div>
                 )}
             </main>
+            <Footer lang={lang} onPageClick={(slug) => { window.location.href = '/#page=' + slug; }} />
         </div>
     );
 }

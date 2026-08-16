@@ -215,3 +215,4 @@ DROP TRIGGER IF EXISTS trg_messages_notifications_event ON messages;
 CREATE TRIGGER trg_messages_notifications_event
 AFTER INSERT ON messages
 FOR EACH ROW EXECUTE FUNCTION trg_notify_from_messages();
+

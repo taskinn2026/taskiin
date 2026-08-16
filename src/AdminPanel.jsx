@@ -11,6 +11,7 @@ import {
 import NotificationBellAdmin from './components/NotificationBellAdmin';
 import AdminFinancials from './components/AdminFinancials';
 import AdminPagesSection from './components/AdminPagesSection';
+import { Footer } from './components/Footer';
 
 const ADMIN_T = {
     ar: {
@@ -709,6 +710,7 @@ const MarketingSection = ({ t, lang }) => {
     const [seasonBanners, setSeasonBanners] = useState([]); // New state
     const [seasonBannerModal, setSeasonBannerModal] = useState({ open: false, banner: null }); // New modal state
     const [footerLinks, setFooterLinks] = useState([]);
+    const [chargilyLink, setChargilyLink] = useState('');
     const [customPages, setCustomPages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploadingBanner, setUploadingBanner] = useState(false);
@@ -789,16 +791,18 @@ const MarketingSection = ({ t, lang }) => {
 
     const fetchBanners = async () => {
         setLoading(true);
-        const [bannersData, seasonBannersData, footerData, pagesData] = await Promise.all([
+        const [bannersData, seasonBannersData, footerData, pagesData, chargilyData] = await Promise.all([
             commonService.getAllBanners(),
             commonService.getAdminSeasonBanners().catch(e => { console.error('No season_banners table yet', e); return []; }),
             commonService.getAppSettings('footer_links').catch(e => []),
-            commonService.getCustomPages().catch(e => [])
+            commonService.getCustomPages().catch(e => []),
+            commonService.getAppSettings('chargily_link').catch(e => '')
         ]);
         setBanners(bannersData || []);
         setSeasonBanners(seasonBannersData || []);
         setFooterLinks(footerData || []);
         setCustomPages(pagesData || []);
+        setChargilyLink(chargilyData || '');
         setLoading(false);
     };
 
@@ -905,13 +909,14 @@ const MarketingSection = ({ t, lang }) => {
     const seasonBanner = banners.find(b => b.type === 'season') || null;
     const promoBanners = banners.filter(b => b.type === 'promo');
 
-    const handleSaveFooter = async () => {
+    const handleSaveSettings = async () => {
         try {
             await commonService.updateAppSettings('footer_links', footerLinks);
-            toast.success(lang === 'ar' ? 'تم حفظ روابط الفوتر' : 'Footer links saved');
+            await commonService.updateAppSettings('chargily_link', chargilyLink);
+            toast.success(lang === 'ar' ? 'تم حفظ الإعدادات' : 'Settings saved');
         } catch (e) {
             console.error(e);
-            toast.error(lang === 'ar' ? 'فشل حفظ الروابط' : 'Failed to save links');
+            toast.error(lang === 'ar' ? 'فشل حفظ الإعدادات' : 'Failed to save settings');
         }
     };
 
@@ -1018,12 +1023,21 @@ const MarketingSection = ({ t, lang }) => {
                 </div>
             </div>
 
-            {/* Footer Settings */}
+            {/* General Settings */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-gray-900">{lang === 'ar' ? 'روابط الفوتر' : 'Footer Links'}</h3>
-                    <button onClick={handleSaveFooter} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold"><Save size={16} />{t.save}</button>
+                    <h3 className="font-bold text-gray-900">{lang === 'ar' ? 'الإعدادات العامة' : 'General Settings'}</h3>
+                    <button onClick={handleSaveSettings} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold"><Save size={16} />{t.save}</button>
                 </div>
+                
+                <div className="mb-6">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">{lang === 'ar' ? 'رابط الدفع المباشر (شارجيلي)' : 'Chargily Payment Link'}</label>
+                    <input type="text" value={chargilyLink} onChange={e => setChargilyLink(e.target.value)} placeholder={lang === 'ar' ? 'أدخل رابط شارجيلي لتفعيل الدفع الحقيقي...' : 'Enter Chargily link for real payments...'} className="w-full border border-gray-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                    <p className="text-xs text-gray-500 mt-1">{lang === 'ar' ? 'إذا تُرك فارغاً، سيتم استخدام الدفع التجريبي.' : 'If left empty, experimental payment will be used.'}</p>
+                </div>
+
+                <div className="border-t border-gray-100 pt-4">
+                    <h4 className="font-bold text-gray-900 mb-3">{lang === 'ar' ? 'روابط الفوتر' : 'Footer Links'}</h4>
                 <div className="space-y-3">
                     {footerLinks.map((link, idx) => (
                         <div key={idx} className="flex flex-col md:flex-row md:items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
@@ -1377,7 +1391,8 @@ export default function AdminPanel({ lang, setLang, setRole, onLogout }) {
                         <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-800 font-bold">A</div>
                     </div>
                 </header>
-                <main className="p-6">{renderSection()}</main>
+                <main className="p-6 min-h-[calc(100vh-160px)]">{renderSection()}</main>
+                <Footer lang={lang} onPageClick={(slug) => { window.location.href = '/#page=' + slug; }} />
             </div>
         </div>
     );

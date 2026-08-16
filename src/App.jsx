@@ -1181,6 +1181,13 @@ const CheckoutFlow = ({ hotel, type, onClose, lang, dates, user, onBooked }) => 
       // 2. Process Payment (Redirect to Chargily)
       if (deposit > 0) {
         try {
+          const customChargilyLink = await commonService.getAppSettings('chargily_link');
+          if (customChargilyLink && customChargilyLink.trim() !== '') {
+             console.log('Redirecting to Custom Chargily Link:', customChargilyLink);
+             window.location.href = customChargilyLink;
+             return;
+          }
+
           // Fix: Use createCheckoutSession instead of direct createPayment to trigger Chargily Flow
           const session = await bookingService.createCheckoutSession(newlyCreatedBooking.id, user.id, bookingRef);
 
@@ -2983,4 +2990,5 @@ export default function TalbiaApp() {
     </DataProvider>
   );
 }
+
 

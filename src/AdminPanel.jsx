@@ -1034,10 +1034,24 @@ const MarketingSection = ({ t, lang }) => {
                     <button onClick={handleSaveSettings} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold"><Save size={16} />{t.save}</button>
                 </div>
                 
-                <div className="mb-6">
-                    <label className="block text-sm font-bold text-gray-700 mb-2">{lang === 'ar' ? 'رابط الدفع المباشر (شارجيلي)' : 'Chargily Payment Link'}</label>
-                    <input type="text" value={chargilyLink} onChange={e => setChargilyLink(e.target.value)} placeholder={lang === 'ar' ? 'أدخل رابط شارجيلي لتفعيل الدفع الحقيقي...' : 'Enter Chargily link for real payments...'} className="w-full border border-gray-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
-                    <p className="text-xs text-gray-500 mt-1">{lang === 'ar' ? 'إذا تُرك فارغاً، سيتم استخدام الدفع التجريبي.' : 'If left empty, experimental payment will be used.'}</p>
+                <div className="mb-4">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">{lang === 'ar' ? 'رابط دفع خارجي مخصص (اختياري)' : 'Custom Direct Payment Link'}</label>
+                    <input type="text" value={chargilyLink} onChange={e => setChargilyLink(e.target.value)} placeholder={lang === 'ar' ? 'أدخل رابط الدفع المباشر هنا...' : 'Enter direct payment link...'} className="w-full border border-gray-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                    <p className="text-xs text-gray-500 mt-1">{lang === 'ar' ? 'يُستخدم فقط إذا كنت تريد تخطي الدفع المدمج بالكامل وتحويل المستخدمين لصفحة خارجية.' : 'Used only to bypass the built-in checkout.'}</p>
+                </div>
+                
+                <div className="flex items-center justify-between mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <div className="flex flex-col">
+                        <span className="font-bold text-gray-900">{lang === 'ar' ? 'تفعيل الدفع المباشر (Live Mode)' : 'Enable Live Payment Mode'}</span>
+                        <span className="text-xs text-gray-500">{lang === 'ar' ? 'عند التفعيل، سيتم استخدام مفتاح Live وإرسال الأموال لحسابك. عند التعطيل، يستخدم وضع الاختبار.' : 'When enabled, live keys are used. Otherwise, test mode is used.'}</span>
+                    </div>
+                    <button 
+                        onClick={() => setChargilyLiveMode(!chargilyLiveMode)} 
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${chargilyLiveMode ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                        dir="ltr"
+                    >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${chargilyLiveMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
                 </div>
 
                 <div className="border-t border-gray-100 pt-4">

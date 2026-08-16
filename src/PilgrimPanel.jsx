@@ -10,8 +10,10 @@ import { pilgrimService } from './services/pilgrimService';
 import { bookingService } from './services/bookingService';
 import { commonService } from './services/commonService';
 import { generateBookingPdf } from './services/pdfService';
+import GuestListEditor from './components/GuestListEditor';
 import VoucherTemplate from './components/VoucherTemplate';
 import { Footer } from './components/Footer';
+import CustomPageViewer from './components/CustomPageViewer';
 import { supabase } from './lib/supabase';
 import { toast } from 'react-hot-toast';
 import BookingsPage from './components/BookingsPage';
@@ -948,7 +950,7 @@ const NotificationBell = ({ user, lang, onNavigate }) => {
 };
 
 // Main Pilgrim Panel
-export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, profile, onClose, onSelectHotel, initialTab = 'bookings', isUserOnline, showToast, onPageClick }) {
+export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, profile, onClose, onSelectHotel, initialTab = 'bookings', isUserOnline, showToast, onPageClick, selectedPageSlug }) {
     const { loading } = useData(); // Consume global data
     // roommates, favorites, payments Removed from global context to lazy load
     const [activeSection, setActiveSection] = useState(window.location.hash.replace('#', '') || initialTab);
@@ -1311,30 +1313,36 @@ export default function PilgrimPanel({ lang, setLang, setRole, onLogout, user, p
 
             <main className={`pt-16 pb-20 md:pb-6 px-4 flex-1 w-full ${lang === 'ar' ? 'md:mr-64' : 'md:ml-64'}`}>
                 <div className="max-w-2xl mx-auto">
-                    {seasonBanner && (
-                        <div className="mb-6 rounded-2xl overflow-hidden relative shadow-md hover:shadow-lg transition-shadow">
-                            <div className="min-h-[7rem] md:min-h-[9rem] bg-gradient-to-br from-emerald-900 via-emerald-700 to-emerald-500 flex flex-col items-center justify-center px-6 py-6 relative overflow-hidden text-center">
-                                {seasonBanner.image_url && <img src={seasonBanner.image_url} alt="season banner" className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-overlay" />}
-                                {/* Shimmer overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
-                                <div className="relative z-10 text-white">
-                                    <div className="text-lg md:text-xl font-bold mb-1 drop-shadow">{seasonBanner.title}</div>
-                                    {seasonBanner.description && <div className="text-xs md:text-sm opacity-90 mb-3">{seasonBanner.description}</div>}
-                                    {seasonBanner.link_url && (
-                                        <a
-                                            href={seasonBanner.link_url}
-                                            onClick={e => e.stopPropagation()}
-                                            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/40 text-white font-bold text-sm shadow-lg hover:bg-white/30 transition-all duration-300 relative overflow-hidden group/btn"
-                                        >
-                                            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-in-out" />
-                                            <span>{lang === 'ar' ? 'اضغط هنا ✨' : 'Click Here ✨'}</span>
-                                        </a>
-                                    )}
+                    {selectedPageSlug ? (
+                        <CustomPageViewer slug={selectedPageSlug} onBack={() => onPageClick(null)} lang={lang} onPageClick={onPageClick} hideFooter={true} />
+                    ) : (
+                        <>
+                            {seasonBanner && (
+                                <div className="mb-6 rounded-2xl overflow-hidden relative shadow-md hover:shadow-lg transition-shadow">
+                                    <div className="min-h-[7rem] md:min-h-[9rem] bg-gradient-to-br from-emerald-900 via-emerald-700 to-emerald-500 flex flex-col items-center justify-center px-6 py-6 relative overflow-hidden text-center">
+                                        {seasonBanner.image_url && <img src={seasonBanner.image_url} alt="season banner" className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-overlay" />}
+                                        {/* Shimmer overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+                                        <div className="relative z-10 text-white">
+                                            <div className="text-lg md:text-xl font-bold mb-1 drop-shadow">{seasonBanner.title}</div>
+                                            {seasonBanner.description && <div className="text-xs md:text-sm opacity-90 mb-3">{seasonBanner.description}</div>}
+                                            {seasonBanner.link_url && (
+                                                <a
+                                                    href={seasonBanner.link_url}
+                                                    onClick={e => e.stopPropagation()}
+                                                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/40 text-white font-bold text-sm shadow-lg hover:bg-white/30 transition-all duration-300 relative overflow-hidden group/btn"
+                                                >
+                                                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-in-out" />
+                                                    <span>{lang === 'ar' ? 'اضغط هنا ✨' : 'Click Here ✨'}</span>
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            )}
+                            {renderSection()}
+                        </>
                     )}
-                    {renderSection()}
                 </div>
             </main>
             <div className={`pt-8 pb-20 md:pb-0 ${lang === 'ar' ? 'md:mr-64' : 'md:ml-64'}`}>

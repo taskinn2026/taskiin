@@ -3,7 +3,7 @@ import { commonService } from '../services/commonService';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Footer } from './Footer';
 
-export default function CustomPageViewer({ slug, onBack, lang, onPageClick }) {
+export default function CustomPageViewer({ slug, onBack, lang, onPageClick, hideFooter }) {
     const [page, setPage] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -23,7 +23,7 @@ export default function CustomPageViewer({ slug, onBack, lang, onPageClick }) {
     }, [slug]);
 
     return (
-        <div className="min-h-screen bg-stone-50 flex flex-col" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className={`${hideFooter ? 'flex-1 rounded-2xl overflow-hidden shadow-sm' : 'min-h-screen'} bg-stone-50 flex flex-col`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
             <header className="bg-white border-b border-gray-100 px-4 md:px-6 py-4 flex items-center sticky top-0 z-30 shadow-sm">
                 <button onClick={onBack} className="p-2 -mx-2 hover:bg-gray-100 rounded-xl text-gray-700 mr-2 rtl:ml-2 rtl:mr-0 transition-colors">
                     {lang === 'ar' ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
@@ -54,7 +54,7 @@ export default function CustomPageViewer({ slug, onBack, lang, onPageClick }) {
                     </div>
                 )}
             </main>
-            <Footer lang={lang} onPageClick={(slug) => { onPageClick(slug); window.scrollTo(0,0); }} />
+            {!hideFooter && <Footer lang={lang} onPageClick={(slug) => { onPageClick(slug); window.scrollTo(0,0); }} />}
         </div>
     );
 }

@@ -14,6 +14,7 @@ import { toast } from 'react-hot-toast';
 import HotelFinancials from './components/HotelFinancials';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import CustomPageViewer from './components/CustomPageViewer';
 import { Footer } from './components/Footer';
 
 // ========== ACTION REQUIRED: ERROR BOUNDARY ==========
@@ -1227,7 +1228,7 @@ const HotelSetupWizard = ({ t, lang, onSave, loading }) => {
 };
 
 // ========== MAIN COMPONENT ==========
-export default function PartnerPanel({ lang, setLang, setRole, onLogout, onPageClick }) {
+export default function PartnerPanel({ lang, setLang, setRole, onLogout, onPageClick, selectedPageSlug }) {
     const [active, setActive] = useState(window.location.hash.replace('#', '') || 'overview');
 
     useEffect(() => {
@@ -1501,28 +1502,34 @@ export default function PartnerPanel({ lang, setLang, setRole, onLogout, onPageC
                         </div>
                     </header>
                     <main className="p-4 md:p-6 flex-1 w-full">
-                        {seasonBanner && (
-                            <div className="mb-6 rounded-2xl overflow-hidden relative shadow-md hover:shadow-lg transition-shadow">
-                                <div className="min-h-[8rem] md:min-h-[10rem] bg-gradient-to-br from-emerald-900 via-emerald-700 to-emerald-500 flex flex-col items-center justify-center px-8 py-6 relative overflow-hidden text-center">
-                                    {seasonBanner.image_url && <img src={seasonBanner.image_url} alt="season banner" className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-overlay" />}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
-                                    <div className="relative z-10 text-white">
-                                        <div className="text-xl md:text-2xl font-bold mb-2 drop-shadow">{seasonBanner.title}</div>
-                                        {seasonBanner.description && <div className="text-sm md:text-base opacity-90 mb-4">{seasonBanner.description}</div>}
-                                        {seasonBanner.link_url && (
-                                            <a
-                                                href={seasonBanner.link_url}
-                                                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/40 text-white font-bold text-sm shadow-lg hover:bg-white/30 transition-all duration-300 relative overflow-hidden group/btn"
-                                            >
-                                                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-in-out" />
-                                                <span>{lang === 'ar' ? 'اضغط هنا ✨' : 'Click Here ✨'}</span>
-                                            </a>
-                                        )}
+                        {selectedPageSlug ? (
+                            <CustomPageViewer slug={selectedPageSlug} onBack={() => onPageClick(null)} lang={lang} onPageClick={onPageClick} hideFooter={true} />
+                        ) : (
+                            <>
+                                {seasonBanner && (
+                                    <div className="mb-6 rounded-2xl overflow-hidden relative shadow-md hover:shadow-lg transition-shadow">
+                                        <div className="min-h-[8rem] md:min-h-[10rem] bg-gradient-to-br from-emerald-900 via-emerald-700 to-emerald-500 flex flex-col items-center justify-center px-8 py-6 relative overflow-hidden text-center">
+                                            {seasonBanner.image_url && <img src={seasonBanner.image_url} alt="season banner" className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-overlay" />}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+                                            <div className="relative z-10 text-white">
+                                                <div className="text-xl md:text-2xl font-bold mb-2 drop-shadow">{seasonBanner.title}</div>
+                                                {seasonBanner.description && <div className="text-sm md:text-base opacity-90 mb-4">{seasonBanner.description}</div>}
+                                                {seasonBanner.link_url && (
+                                                    <a
+                                                        href={seasonBanner.link_url}
+                                                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/40 text-white font-bold text-sm shadow-lg hover:bg-white/30 transition-all duration-300 relative overflow-hidden group/btn"
+                                                    >
+                                                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-in-out" />
+                                                        <span>{lang === 'ar' ? 'اضغط هنا ✨' : 'Click Here ✨'}</span>
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                )}
+                                {render()}
+                            </>
                         )}
-                        {render()}
                     </main>
                     <Footer lang={lang} onPageClick={(slug) => { onPageClick(slug); window.scrollTo(0,0); }} />
                 </div>

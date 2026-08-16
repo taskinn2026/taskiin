@@ -11,6 +11,7 @@ import {
 import NotificationBellAdmin from './components/NotificationBellAdmin';
 import AdminFinancials from './components/AdminFinancials';
 import AdminPagesSection from './components/AdminPagesSection';
+import CustomPageViewer from './components/CustomPageViewer';
 import { Footer } from './components/Footer';
 
 const ADMIN_T = {
@@ -1363,7 +1364,7 @@ const InsightsSection = ({ t, lang }) => {
 };
 
 // Main Admin Panel
-export default function AdminPanel({ lang, setLang, setRole, onLogout, onPageClick }) {
+export default function AdminPanel({ lang, setLang, setRole, onLogout, onPageClick, selectedPageSlug }) {
     const [activeSection, setActiveSection] = useState(window.location.hash.replace('#', '') || 'dashboard');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -1410,7 +1411,13 @@ export default function AdminPanel({ lang, setLang, setRole, onLogout, onPageCli
                         <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-800 font-bold">A</div>
                     </div>
                 </header>
-                <main className="p-6 flex-1 w-full">{renderSection()}</main>
+                <main className="p-6 flex-1 w-full">
+                    {selectedPageSlug ? (
+                        <CustomPageViewer slug={selectedPageSlug} onBack={() => onPageClick(null)} lang={lang} onPageClick={onPageClick} hideFooter={true} />
+                    ) : (
+                        renderSection()
+                    )}
+                </main>
                 <Footer lang={lang} onPageClick={(slug) => { onPageClick(slug); window.scrollTo(0,0); }} />
             </div>
         </div>
